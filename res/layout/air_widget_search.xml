@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/air_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="4dp">
+    <FrameLayout
+        android:id="@+id/air_widget_bar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/air_widget_bg"
+        android:paddingStart="16dp"
+        android:paddingEnd="18dp">
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="34dp"
+            android:layout_gravity="start|center_vertical"
+            android:contentDescription="AIR Navig"
+            android:src="@drawable/air_widget_logo" />
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="end|center_vertical"
+            android:contentDescription="Rechercher"
+            android:src="@drawable/air_widget_search" />
+    </FrameLayout>
+</FrameLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="air_widget_bg">#FFF1F2F6</color>
+    <color name="air_widget_stroke">#FFE1E2E7</color>
+    <color name="air_widget_icon">#FF14161A</color>
+</resources>

@@ -1,4 +1,4 @@
-# AIR Navig — code source (version 1.3-securise)
+# AIR Navig 1.0 — code source
 
 AIR Navig est un navigateur de la marque **AIR**, créé par **Rami**, un peu passionné de développement.
 
@@ -42,3 +42,7 @@ Le moteur reste le WebView du système (Blink/V8, le même que Chrome). La lente
 - Rendu **prioritaire** pour la page visitée et dessin anticipé pour un défilement fluide.
 - Code Java sans lambdas (classes anonymes) : il se compile aussi bien avec `d8` qu'avec l'ancien `dx`.
 - Compilation automatique : `.github/workflows/build.yml` (GitHub Actions) produit l'APK signé à chaque envoi sur `main`.
+
+## AIR Navig 1.0 — widget et nouveau nom
+- L'appli s'appelle désormais **AIR Navig 1.0** (version affichée : 1.0.x, x = numéro de compilation).
+- **Widget barre de recherche** pour l'écran d'accueil (`java/SearchWidget.java`, `res/layout/air_widget_search.xml`) : logo AIR à gauche, loupe à droite ; un appui ouvre l'appli. Il suit le thème clair/sombre du téléphone et s'élargit horizontalement.

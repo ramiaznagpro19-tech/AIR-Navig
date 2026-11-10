@@ -33,7 +33,7 @@ jobs:
       - name: Version
         run: |
           echo "VCODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
-          echo "VNAME=3.3.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          echo "VNAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
       - name: Compiler le code Java
         run: |
@@ -46,7 +46,8 @@ jobs:
           java -jar apktool.jar d -s -f base/AIR-Navig-base.apk -o build/dec
           cp build/dex/classes.dex build/dec/classes.dex
           cp assets/* build/dec/assets/
-          cp res/xml/network_security_config.xml build/dec/res/xml/network_security_config.xml
+          cp -r res/. build/dec/res/
+          cp AndroidManifest.xml build/dec/AndroidManifest.xml
           # Code source embarqué dans l'appli
           mkdir -p build/src/AIR-Navig-source
           cp -r java assets res AndroidManifest.xml build/src/AIR-Navig-source/
@@ -78,5 +79,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v${VNAME}" "build/AIR-Navig-${VNAME}.apk" \
-            --title "AIR Navig ${VNAME}" \
+            --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" \
             --notes "APK compilé automatiquement depuis le commit ${GITHUB_SHA::7}."
