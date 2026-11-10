@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AIR Navig : seuls les certificats des autorités du système sont acceptés.
+     Les certificats installés par l'utilisateur ou une appli tierce (souvent utilisés
+     pour intercepter le trafic) sont refusés. Le HTTP non chiffré reste possible
+     pour les vieux sites, mais seulement après le passage en HTTPS prioritaire et
+     l'accord explicite de l'utilisateur. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <!-- Serveur de la liste de blocage : HTTPS obligatoire. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">raw.githubusercontent.com</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

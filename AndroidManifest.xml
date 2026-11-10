@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?><manifest xmlns:android="http://schemas.android.com/apk/res/android" android:compileSdkVersion="34" android:compileSdkVersionCodename="14" package="app.airnavig">
+    <!-- AIR Navig, navigateur de la marque AIR, créé par Rami, un peu passionné de développement. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Caméra, micro et position : demandés uniquement quand un site les réclame ET que l'utilisateur accepte pour ce site. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <!-- Position approximative seulement (la position précise n'est plus demandée). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Installation des mises à jour vérifiées (même signature AIR obligatoire). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
+    <uses-feature android:name="android.hardware.location" android:required="false"/>
+    <application android:allowBackup="false" android:fullBackupContent="false" android:hardwareAccelerated="true" android:icon="@mipmap/ic_launcher" android:label="AIR Navig" android:networkSecurityConfig="@xml/network_security_config" android:roundIcon="@mipmap/ic_launcher" android:supportsRtl="true" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:usesCleartextTraffic="false">
+        <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="true"/>
+        <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true"/>
+        <meta-data android:name="app.airnavig.MARQUE" android:value="AIR"/>
+        <meta-data android:name="app.airnavig.CREATEUR" android:value="Rami, un peu passionné de développement, a créé AIR Navig."/>
+        <!-- Exportée car c'est le lanceur et le navigateur par défaut possible ; toutes les données reçues sont filtrées (http, https, ou fichier HTML partagé avec autorisation). -->
+        <activity android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode" android:exported="true" android:launchMode="singleTask" android:name="app.airnavig.MainActivity" android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+            </intent-filter>
+            <!-- Ouvrir un fichier HTML partagé par une autre appli (plus de file:// ni de BROWSABLE : un site ne peut pas déclencher cette entrée). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content"/>
+                <data android:mimeType="text/html"/>
+                <data android:mimeType="application/xhtml+xml"/>
+            </intent-filter>
+        </activity>
+        <activity android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode" android:exported="false" android:label="AIR Navig privé" android:launchMode="singleTask" android:name="app.airnavig.IncognitoActivity" android:process=":inconnu" android:taskAffinity="app.airnavig.inconnu" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:windowSoftInputMode="adjustResize"/>
+        <activity android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode" android:exported="false" android:label="Bac à sable" android:name="app.airnavig.SandboxActivity" android:process=":bacasable" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:windowSoftInputMode="adjustResize"/>
+    </application>
+</manifest>
