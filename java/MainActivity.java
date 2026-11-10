@@ -81,6 +81,7 @@ public class MainActivity extends Activity {
     static final int POS_BOTTOM = 0;
     static final int POS_TOP = 1;
     static final int POS_RIGHT = 2;
+    static final int POS_LEFT = 3;
     private static final int REQ_MEDIA = 7;
     private static final int REQ_GEO = 8;
     private static final int REQ_FILE = 9;
@@ -241,7 +242,7 @@ public class MainActivity extends Activity {
         siteDark = prefs.getBoolean("siteDark", false);
         siteForce = prefs.getBoolean("siteForce", false);
         pos = prefs.getInt("pos", POS_BOTTOM);
-        barSize = pos == POS_RIGHT ? 64 : pos == POS_TOP ? 60 : 120;
+        barSize = isSide(pos) ? 64 : pos == POS_TOP ? 60 : 120;
         adapt = prefs.getBoolean("adapt", true);
 
         root = new FrameLayout(this);
@@ -298,6 +299,7 @@ public class MainActivity extends Activity {
         setContentView(root);
         applySavedTheme();
 
+        ui.postDelayed(sleepTick, 60000);
         String initial = incomingUrl(getIntent());
         chrome.loadUrl(CHROME_URL + "#" + Uri.encode(initial == null ? "" : initial));
 
@@ -513,10 +515,177 @@ public class MainActivity extends Activity {
         return (int) (i * density);
     }
 
+    static boolean isSide(int p) {
+        return p == POS_RIGHT || p == POS_LEFT;
+    }
+
+    /* ======================= Onglets vivants et onglets en veille =======================
+       Chaque onglet récent garde son propre WebView (retour instantané, historique et
+       défilement conservés). Au-delà de maxLive, ou après sleepAfterMs sans utilisation,
+       l'onglet est mis en veille : son WebView est détruit pour libérer la mémoire, seule
+       son adresse est gardée par l'interface, et il se recharge quand on y revient. */
+    private final java.util.LinkedHashMap<String, WebView> pool = new java.util.LinkedHashMap<String, WebView>(16, 0.75f, true);
+    private final HashMap<String, Long> lastUsed = new HashMap<String, Long>();
+    private String currentTab = null;
+    private int maxLive = 3;
+    private long sleepAfterMs = 30 * 60000L;
+    private final Runnable sleepTick = new Runnable() {
+        @Override
+        public void run() {
+            sleepIdle();
+            ui.postDelayed(this, 60000);
+        }
+    };
+
+    private void switchTab(String id, String url) {
+        if (id == null || id.isEmpty() || id.length() > 64) {
+            navigate(url);
+            return;
+        }
+        if (id.equals(currentTab) && content != null) {
+            if (content.getUrl() == null && !url.isEmpty()) navigate(url);
+            else reportTab();
+            return;
+        }
+        WebView old = content;
+        if (old != null) {
+            if (currentTab != null) {
+                try {
+                    old.onPause();
+                } catch (Throwable ignored) {
+                }
+                pool.put(currentTab, old);
+                lastUsed.put(currentTab, System.currentTimeMillis());
+            } else {
+                // WebView de démarrage pas encore rattaché à un onglet : on le réutilise.
+                currentTab = id;
+                navigate(url.isEmpty() ? HOME_URL_FALLBACK() : url);
+                reportLive();
+                return;
+            }
+        }
+        WebView w = pool.remove(id);
+        lastUsed.remove(id);
+        currentTab = id;
+        if (w != null) {
+            content = w;
+            try {
+                w.onResume();
+            } catch (Throwable ignored) {
+            }
+            col.removeView(old);
+            arrange();
+            applyPermissions();
+            reportTab();
+        } else {
+            if (old != null) col.removeView(old);
+            content = null;
+            createContent();
+            arrange();
+            navigate(url.isEmpty() ? HOME_URL_FALLBACK() : url);
+        }
+        trimPool();
+        reportLive();
+    }
+
+    private String HOME_URL_FALLBACK() {
+        return ASSET + "home.html";
+    }
+
+    /** Envoie à l'interface l'état de l'onglet qui vient de reprendre la main. */
+    private void reportTab() {
+        if (content == null) return;
+        String u = content.getUrl();
+        int pr = content.getProgress();
+        onNav(content, u, pr < 100);
+        lastProgress = pr;
+        toJs("onProgress(" + pr + ")");
+        String t = content.getTitle();
+        if (t != null && u != null && !u.startsWith(ASSET)) call("onTitle", t);
+    }
+
+    private void destroyView(WebView w) {
+        if (w == null) return;
+        try {
+            w.stopLoading();
+            col.removeView(w);
+            w.destroy();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void sleepTab(String id) {
+        if (id == null || id.equals(currentTab)) return;
+        WebView w = pool.remove(id);
+        lastUsed.remove(id);
+        if (w != null) {
+            destroyView(w);
+            reportLive();
+        }
+    }
+
+    /** Met en veille tous les onglets sauf celui affiché. */
+    void sleepBackground() {
+        if (pool.isEmpty()) return;
+        for (WebView w : pool.values()) destroyView(w);
+        pool.clear();
+        lastUsed.clear();
+        reportLive();
+    }
+
+    private void closeTabView(String id) {
+        if ("*".equals(id)) {
+            sleepBackground();
+            return;
+        }
+        sleepTab(id);
+    }
+
+    /** Garde au plus maxLive onglets vivants (l'onglet affiché compris). */
+    private void trimPool() {
+        boolean changed = false;
+        while (pool.size() > Math.max(0, maxLive - 1)) {
+            String eldest = pool.keySet().iterator().next();
+            destroyView(pool.remove(eldest));
+            lastUsed.remove(eldest);
+            changed = true;
+        }
+        if (changed) reportLive();
+    }
+
+    private void sleepIdle() {
+        if (sleepAfterMs <= 0 || pool.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        List<String> idle = new ArrayList<String>();
+        for (String id : pool.keySet()) {
+            Long t = lastUsed.get(id);
+            if (t != null && now - t > sleepAfterMs) idle.add(id);
+        }
+        for (String id : idle) {
+            destroyView(pool.remove(id));
+            lastUsed.remove(id);
+        }
+        if (!idle.isEmpty()) reportLive();
+    }
+
+    private void reportLive() {
+        org.json.JSONArray arr = new org.json.JSONArray();
+        if (currentTab != null) arr.put(currentTab);
+        for (String id : pool.keySet()) arr.put(id);
+        toJs("window.onLive&&onLive(" + arr.toString() + ")");
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        // Le système manque de mémoire : on endort tout ce qui n'est pas affiché.
+        if (level >= TRIM_MEMORY_RUNNING_LOW) sleepBackground();
+    }
+
     private void arrange() {
         if (col == null || content == null || chrome == null) return;
         col.removeAllViews();
-        boolean side = pos == POS_RIGHT;
+        boolean side = isSide(pos);
         col.setOrientation(side ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         LinearLayout.LayoutParams cp = side ? new LinearLayout.LayoutParams(0, -1, 1f) : new LinearLayout.LayoutParams(-1, 0, 1f);
         LinearLayout.LayoutParams bp;
@@ -527,7 +696,7 @@ public class MainActivity extends Activity {
             bp = side ? new LinearLayout.LayoutParams(px(barSize), -1) : new LinearLayout.LayoutParams(-1, px(barSize));
             if (customView == null) content.setVisibility(View.VISIBLE);
         }
-        if (pos == POS_TOP) {
+        if (pos == POS_TOP || pos == POS_LEFT) {
             col.addView(chrome, bp);
             col.addView(content, cp);
         } else {
@@ -537,11 +706,11 @@ public class MainActivity extends Activity {
     }
 
     private void setPos(String str) {
-        int p = "top".equals(str) ? POS_TOP : "right".equals(str) ? POS_RIGHT : POS_BOTTOM;
+        int p = "top".equals(str) ? POS_TOP : "right".equals(str) ? POS_RIGHT : "left".equals(str) ? POS_LEFT : POS_BOTTOM;
         if (p == pos) return;
         pos = p;
         savePref("pos", p);
-        barSize = p == POS_RIGHT ? 64 : p == POS_TOP ? 60 : 120;
+        barSize = isSide(p) ? 64 : p == POS_TOP ? 60 : 120;
         arrange();
     }
 
@@ -558,7 +727,7 @@ public class MainActivity extends Activity {
         barFull = false;
         barSize = Math.min(i, 2000);
         ViewGroup.LayoutParams lp = chrome.getLayoutParams();
-        if (pos == POS_RIGHT) {
+        if (isSide(pos)) {
             lp.width = px(barSize);
             lp.height = -1;
         } else {
@@ -611,7 +780,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String pos() {
-            return pos == POS_TOP ? "top" : pos == POS_RIGHT ? "right" : "bottom";
+            return pos == POS_TOP ? "top" : pos == POS_RIGHT ? "right" : pos == POS_LEFT ? "left" : "bottom";
         }
 
         @JavascriptInterface
@@ -666,6 +835,27 @@ public class MainActivity extends Activity {
                 case "go":
                     navigate(a);
                     break;
+                case "tab": {
+                    // Changer d'onglet : {"id":"…","url":"…"}
+                    JSONObject j = new JSONObject(a);
+                    switchTab(j.optString("id", ""), j.optString("url", ""));
+                    break;
+                }
+                case "tabclose":
+                    closeTabView(a);
+                    break;
+                case "sleep":
+                    if ("*".equals(a)) sleepBackground();
+                    else for (String id : a.split(",")) sleepTab(id.trim());
+                    break;
+                case "pool": {
+                    // Réglages de veille : {"max":3,"min":30}
+                    JSONObject j = new JSONObject(a);
+                    maxLive = Math.max(1, Math.min(8, j.optInt("max", 3)));
+                    sleepAfterMs = Math.max(0, Math.min(24 * 60, j.optInt("min", 30))) * 60000L;
+                    trimPool();
+                    break;
+                }
                 case "back":
                     if (content.canGoBack()) content.goBack();
                     break;
@@ -692,6 +882,7 @@ public class MainActivity extends Activity {
                     if (on != siteForce) {
                         siteForce = on;
                         savePref("siteForce", on);
+                        sleepBackground();
                         applySiteDark(content);
                         content.reload();
                     }
@@ -754,6 +945,7 @@ public class MainActivity extends Activity {
                     }
                     if (on != desktop || (on && !a.equals(content.getSettings().getUserAgentString()))) {
                         desktop = on;
+                        sleepBackground();
                         content.getSettings().setUserAgentString(on ? a : mobileUA);
                         content.reload();
                     }
@@ -764,6 +956,7 @@ public class MainActivity extends Activity {
                     if (on != adapt) {
                         adapt = on;
                         savePref("adapt", on);
+                        sleepBackground();
                         content.getSettings().setLayoutAlgorithm(on ? WebSettings.LayoutAlgorithm.TEXT_AUTOSIZING : WebSettings.LayoutAlgorithm.NORMAL);
                         content.reload();
                     }
@@ -895,6 +1088,7 @@ public class MainActivity extends Activity {
         if (on == siteDark) return;
         siteDark = on;
         savePref("siteDark", on);
+        sleepBackground();
         rebuildContent();
     }
 
@@ -1174,6 +1368,20 @@ public class MainActivity extends Activity {
         @Override
         public boolean onRenderProcessGone(WebView v, RenderProcessGoneDetail d) {
             // Un site qui fait planter le moteur ne fait pas planter l'appli.
+            if (v != content && pool.containsValue(v)) {
+                String dead = null;
+                for (Map.Entry<String, WebView> e : pool.entrySet()) if (e.getValue() == v) dead = e.getKey();
+                if (dead != null) {
+                    pool.remove(dead);
+                    lastUsed.remove(dead);
+                }
+                try {
+                    v.destroy();
+                } catch (Throwable ignored) {
+                }
+                reportLive();
+                return true;
+            }
             if (v == content) {
                 final String last = v.getUrl();
                 col.removeView(v);
@@ -1558,6 +1766,14 @@ public class MainActivity extends Activity {
             content.destroy();
         }
         ui.removeCallbacksAndMessages(null);
+        for (WebView w : pool.values()) {
+            try {
+                if (inc) w.clearCache(true);
+                w.destroy();
+            } catch (Throwable ignored) {
+            }
+        }
+        pool.clear();
         if (chrome != null) chrome.destroy();
         super.onDestroy();
         if (inc) {

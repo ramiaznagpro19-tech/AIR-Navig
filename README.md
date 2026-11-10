@@ -46,3 +46,8 @@ Le moteur reste le WebView du système (Blink/V8, le même que Chrome). La lente
 ## AIR Navig 1.0 — widget et nouveau nom
 - L'appli s'appelle désormais **AIR Navig 1.0** (version affichée : 1.0.x, x = numéro de compilation).
 - **Widget barre de recherche** pour l'écran d'accueil (`java/SearchWidget.java`, `res/layout/air_widget_search.xml`) : logo AIR à gauche, loupe à droite ; un appui ouvre l'appli. Il suit le thème clair/sombre du téléphone et s'élargit horizontalement.
+
+## Onglets verticaux, groupes et mise en veille
+- **Onglets verticaux** (Réglages › Barre et boutons › Onglets) : barre latérale à gauche ou à droite, avec recherche, navigation, bouclier et la liste des onglets par groupes. Le bouton ▯ la réduit en rail d'icônes.
+- **Groupes d'onglets** : nom + couleur, repliables, menu ⋯ (renommer, nouvel onglet dans le groupe, mettre en veille, dégrouper, fermer). Bouton **Ranger par site** : regroupe automatiquement les onglets d'un même site. Un lien ouvert depuis un groupe reste dans ce groupe.
+- **Mise en veille** : chaque onglet récent garde son propre WebView (retour instantané, historique et défilement conservés). Au-delà du nombre choisi (1 à 5), après le délai choisi (5 min à 1 h) ou quand Android manque de mémoire, les onglets cachés sont endormis : leur WebView est détruit et ils se rechargent quand on y revient (icône lune).
