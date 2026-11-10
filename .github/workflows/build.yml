@@ -1,7 +1,7 @@
 # Compile AIR Navig et publie l'APK signé dans « Releases » à chaque envoi sur main.
-# Secrets à créer (Settings › Secrets and variables › Actions) :
-#   KEYSTORE_B64      : la clé de signature (.jks) encodée en base64
-#   KEYSTORE_PASSWORD : son mot de passe (alias « air »)
+# Un seul secret à créer (Settings › Secrets and variables › Actions) :
+#   KEYSTORE_PASSWORD : mot de passe de la clé (alias « air »).
+# La clé elle-même est dans base/signing-key.jks.enc, chiffrée en AES-256 avec ce mot de passe.
 name: Compiler l'APK
 
 on:
@@ -60,11 +60,10 @@ jobs:
 
       - name: Signer
         env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_B64" ]; then echo "::error::Secret KEYSTORE_B64 manquant"; exit 1; fi
-          echo "$KEYSTORE_B64" | base64 -d > build/key.jks
+          if [ -z "$KEYSTORE_PASSWORD" ]; then echo "::error::Secret KEYSTORE_PASSWORD manquant (Settings > Secrets and variables > Actions)"; exit 1; fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in base/signing-key.jks.enc -out build/key.jks -pass env:KEYSTORE_PASSWORD
           "$BT/apksigner" sign --ks build/key.jks --ks-key-alias air --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD --out "build/AIR-Navig-${VNAME}.apk" build/aligned.apk
           "$BT/apksigner" verify --print-certs "build/AIR-Navig-${VNAME}.apk"
           rm -f build/key.jks
