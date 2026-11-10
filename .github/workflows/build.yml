@@ -79,5 +79,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v${VNAME}" "build/AIR-Navig-${VNAME}.apk" \
-            --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" \
+            --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" --latest \
             --notes "APK compilé automatiquement depuis le commit ${GITHUB_SHA::7}."
