@@ -1,4 +1,4 @@
-# Compile AIR Navig (moteur AIRCore / Gecko) et publie l'APK signé dans « Releases ».
+# Compile AIR Navig (moteur GeckoView de Mozilla) et publie l'APK signé dans « Releases ».
 # Branche main : version publiée. Branche gecko : version d'essai (pré-version).
 # Secret requis : KEYSTORE_PASSWORD (la clé chiffrée est dans base/signing-key.jks.enc).
 name: Compiler l'APK
@@ -36,12 +36,14 @@ jobs:
           echo "VCODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
           echo "VNAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
-      - name: Récupérer le moteur AIRCore
+      - name: Dernière version de GeckoView
         run: |
-          curl -fsSL -o aircore-maven.zip https://github.com/ramiaznagpro19-tech/AIRCore/releases/latest/download/aircore-maven.zip
-          unzip -q -o aircore-maven.zip -d aircore-maven
-          echo "AIRCORE=$(cat aircore-maven/COORDS)" >> "$GITHUB_ENV"
-          cat aircore-maven/COORDS
+          META=https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview-arm64-v8a/maven-metadata.xml
+          VER=$(curl -fsSL "$META" | sed -n 's:.*<release>\(.*\)</release>.*:\1:p' | head -1)
+          test -n "$VER"
+          echo "GECKO=org.mozilla.geckoview:geckoview-arm64-v8a:$VER" >> "$GITHUB_ENV"
+          echo "GECKO_VER=$VER" >> "$GITHUB_ENV"
+          echo "GeckoView $VER" 
 
       - name: Plateforme Android
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" > /dev/null || true
@@ -67,7 +69,7 @@ jobs:
       - name: Compiler
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle --no-daemon --stacktrace assembleRelease -Paircore="$AIRCORE" -Pvcode="$VCODE" -Pvname="$VNAME"
+        run: gradle --no-daemon --stacktrace assembleRelease -Pgecko="$GECKO" -Pvcode="$VCODE" -Pvname="$VNAME"
 
       - name: Vérifier l'APK
         run: |
@@ -90,9 +92,9 @@ jobs:
           if [ "$GITHUB_REF_NAME" = "main" ]; then
             gh release create "v${VNAME}" "out/AIR-Navig-${VNAME}.apk" --latest \
               --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" \
-              --notes "Moteur AIRCore (Gecko). APK compilé depuis le commit ${GITHUB_SHA::7}."
+              --notes "Moteur GeckoView ${GECKO_VER} (Mozilla), sans WebView. APK compilé depuis le commit ${GITHUB_SHA::7}."
           else
             gh release create "v${VNAME}-gecko" "out/AIR-Navig-${VNAME}.apk" --prerelease --latest=false \
-              --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER}) — essai Gecko" \
-              --notes "Version d'essai sur le moteur AIRCore (Gecko), branche gecko, commit ${GITHUB_SHA::7}."
+              --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER}) — essai GeckoView" \
+              --notes "Version d'essai sans WebView, moteur GeckoView ${GECKO_VER} (Mozilla), branche gecko, commit ${GITHUB_SHA::7}."
           fi

@@ -1,4 +1,4 @@
-/* AIR Navig — bloqueur de traqueurs et réglages des pages, dans le moteur AIRCore.
+/* AIR Navig — bloqueur de traqueurs et réglages des pages, dans le moteur GeckoView.
  * Remplace l'ancien « shouldInterceptRequest » du WebView : chaque requête secondaire
  * vers un domaine de la liste (StevenBlack + règles de l'utilisateur) est annulée,
  * et les domaines bloqués sont envoyés à l'appli par lots toutes les 600 ms.

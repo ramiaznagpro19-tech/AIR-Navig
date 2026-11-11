@@ -6,7 +6,6 @@ import android.os.Looper;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import app.air.core.AIRCore;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
@@ -17,7 +16,7 @@ import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.WebExtension;
 
 /**
- * Moteur AIRCore partagé par toute l'appli (Gecko ne peut exister qu'une fois par processus).
+ * Moteur GeckoView (Mozilla) partagé par toute l'appli : Gecko ne peut exister qu'une fois par processus.
  *
  * <p>Il installe l'extension intégrée « air@airnavig.app » qui contient l'interface
  * (chrome.html), le bloqueur de traqueurs (background.js) et le mode sombre des sites (content.js).
@@ -62,8 +61,12 @@ final class Engine {
 
         boolean adapt = context.getSharedPreferences("air", 0).getBoolean("adapt", true);
         // Protections Gecko par défaut : anti-pistage standard, cookies tiers isolés par site,
-        // navigation sécurisée. Télémétrie et rapports déjà coupés dans AIRCore.
-        GeckoRuntimeSettings settings = AIRCore.defaultSettings()
+        // navigation sécurisée. Aucune télémétrie ni rapport de plantage : l'appli n'active
+        // ni Glean ni le gestionnaire de plantages de GeckoView.
+        GeckoRuntimeSettings settings = new GeckoRuntimeSettings.Builder()
+                .remoteDebuggingEnabled(false)
+                .consoleOutput(false)
+                .aboutConfigEnabled(false)
                 .fontInflation(adapt)
                 .build();
         runtime = GeckoRuntime.create(context.getApplicationContext(), settings);

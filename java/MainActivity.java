@@ -24,7 +24,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import app.air.core.AIRCore;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -52,7 +51,7 @@ import org.mozilla.geckoview.WebResponse;
 /**
  * AIR Navig — navigateur de la marque AIR, créé par Rami, un peu passionné de développement.
  *
- * <p>Moteur : AIRCore (Gecko, sans télémétrie). Plus aucun WebView : l'interface (chrome.html)
+ * <p>Moteur : GeckoView, le moteur Gecko de Firefox pour Android (Mozilla). Plus aucun WebView : l'interface (chrome.html)
  * et les sites tournent tous les deux dans Gecko, dans deux sessions séparées. L'interface
  * parle à l'appli par la messagerie native de l'extension intégrée « air@airnavig.app ».
  *
@@ -507,10 +506,11 @@ public class MainActivity extends Activity {
             j.put("listOrigin", Blocklist.origin);
             j.put("listSha", Blocklist.sha256);
             j.put("appUpdate", Updater.status());
-            // Ancien champ « webview » : c'est désormais le moteur AIRCore.
-            j.put("webview", AIRCore.NAME + " " + AIRCore.VERSION + " (Gecko " + AIRCore.geckoVersion() + ")");
-            j.put("engine", AIRCore.NAME + " " + AIRCore.VERSION);
-            j.put("gecko", AIRCore.geckoVersion());
+            // Ancien champ « webview » : c'est désormais le moteur GeckoView.
+            String gecko = org.mozilla.geckoview.BuildConfig.MOZ_APP_VERSION;
+            j.put("webview", "GeckoView " + gecko + " (Mozilla)");
+            j.put("engine", "GeckoView");
+            j.put("gecko", gecko);
             return j;
         } catch (Exception e) {
             return new JSONObject();

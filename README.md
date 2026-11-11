@@ -1,17 +1,19 @@
 # AIR Navig 1.0 — code source
 
-## Moteur : AIRCore (Gecko), plus aucun WebView
-Depuis cette version, AIR Navig n'utilise plus le WebView d'Android. Tout passe par **AIRCore**, le moteur
-Gecko sans télémétrie compilé dans le dépôt https://github.com/ramiaznagpro19-tech/AIRCore.
+## Moteur : GeckoView (Mozilla), plus aucun WebView
+Depuis cette version, AIR Navig n'utilise plus le WebView d'Android. Tout passe par **GeckoView**, le moteur
+Gecko de Firefox pour Android, publié et mis à jour par Mozilla (https://maven.mozilla.org). La compilation
+prend automatiquement la dernière version stable. Aucune télémétrie : l'appli n'active ni Glean ni le
+gestionnaire de plantages de GeckoView.
 
-| Avant (WebView) | Maintenant (AIRCore / Gecko) |
+| Avant (WebView) | Maintenant (GeckoView) |
 |---|---|
 | Interface `chrome.html` dans un WebView + `addJavascriptInterface` | Interface dans une session Gecko, page d'une **extension intégrée** (`assets/air/`), pont par **messagerie native** (`bridge.js` ↔ `MainActivity`) |
 | Bloqueur dans `shouldInterceptRequest` | Bloqueur dans `background.js` (`webRequest` bloquant), même liste StevenBlack + règles perso |
 | Mode sombre forcé par `evaluateJavascript` | `content.js` de l'extension + thème préféré annoncé aux sites |
 | `WebChromeClient` (dialogues, fichiers, permissions) | `Prompts.java`, `Perms.java` (listes déroulantes, dates, fichiers, caméra/micro/position site par site) |
 | Navigation privée / bac à sable dans des processus WebView séparés | Sessions **privées** Gecko : rien n'est gardé à la fermeture |
-| Compilation `javac` + `apktool` | Compilation **Gradle** (le moteur arrive comme bibliothèque Android) |
+| Compilation `javac` + `apktool` | Compilation **Gradle** (GeckoView arrive comme bibliothèque Android depuis Mozilla) |
 
 Fichiers principaux : `java/Engine.java` (moteur partagé + extension), `java/MainActivity.java`,
 `java/Prompts.java`, `java/Perms.java`, `java/SandboxActivity.java`, `assets/air/*`.

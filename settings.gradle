@@ -1,4 +1,4 @@
-// AIR Navig — application Android sur le moteur AIRCore (Gecko).
+// AIR Navig — application Android sur le moteur GeckoView (Mozilla).
 pluginManagement {
     repositories {
         google()
@@ -10,8 +10,6 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
     repositories {
-        // Moteur AIRCore, téléchargé depuis les « Releases » du dépôt AIRCore (aircore-maven.zip).
-        maven { url = uri("aircore-maven") }
         google()
         mavenCentral()
         maven { url = uri("https://maven.mozilla.org/maven2/") }

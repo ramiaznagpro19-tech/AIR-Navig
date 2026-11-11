@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "AIR Navig",
   "version": "1.0",
-  "description": "Interface, bloqueur et mode sombre d'AIR Navig (extension intégrée au moteur AIRCore).",
+  "description": "Interface, bloqueur et mode sombre d'AIR Navig (extension intégrée au moteur GeckoView).",
   "browser_specific_settings": {
     "gecko": { "id": "air@airnavig.app" }
   },

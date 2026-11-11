@@ -16,7 +16,7 @@ android {
         versionCode = (project.findProperty('vcode') ?: '1') as int
         versionName = project.findProperty('vname') ?: '1.0'
         ndk {
-            // Le moteur AIRCore est compilé pour les téléphones 64 bits (arm64-v8a).
+            // GeckoView est pris en version 64 bits (arm64-v8a) : APK plus léger.
             abiFilters += ['arm64-v8a']
         }
     }
@@ -60,7 +60,7 @@ android {
 }
 
 dependencies {
-    // Coordonnées lues dans aircore-maven/COORDS (fournies par le dépôt AIRCore).
-    implementation project.property('aircore')
+    // Moteur GeckoView officiel de Mozilla (version arm64), version choisie par la compilation.
+    implementation project.property('gecko')
     implementation 'androidx.annotation:annotation:1.11.0'
 }

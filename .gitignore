@@ -2,6 +2,4 @@ build/
 *.jks
 *.keystore
 .gradle/
-aircore-maven/
-aircore-maven.zip
 local.properties

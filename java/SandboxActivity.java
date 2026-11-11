@@ -18,7 +18,7 @@ import org.mozilla.geckoview.GeckoView;
 import org.mozilla.geckoview.WebResponse;
 
 /**
- * Bac à sable AIR Navig : le site s'ouvre dans une session privée AIRCore isolée.
+ * Bac à sable AIR Navig : le site s'ouvre dans une session privée GeckoView isolée.
  * Aucun accès au micro, à la caméra, à la position ni aux fichiers ; téléchargements bloqués ;
  * tout (cookies, cache, historique) est effacé à la fermeture. Le bloqueur reste actif.
  */
