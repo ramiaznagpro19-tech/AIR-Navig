@@ -90,11 +90,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_REF_NAME" = "main" ]; then
-            gh release create "v${VNAME}" "out/AIR-Navig-${VNAME}.apk" --latest \
+            gh release create "v${VNAME}" "out/AIR-Navig-${VNAME}.apk" --target "$GITHUB_SHA" --latest \
               --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" \
               --notes "Moteur GeckoView ${GECKO_VER} (Mozilla), sans WebView. APK compilé depuis le commit ${GITHUB_SHA::7}."
           else
-            gh release create "v${VNAME}-gecko" "out/AIR-Navig-${VNAME}.apk" --prerelease --latest=false \
+            gh release create "v${VNAME}-gecko" "out/AIR-Navig-${VNAME}.apk" --target "$GITHUB_SHA" --prerelease --latest=false \
               --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER}) — essai GeckoView" \
               --notes "Version d'essai sans WebView, moteur GeckoView ${GECKO_VER} (Mozilla), branche gecko, commit ${GITHUB_SHA::7}."
           fi
