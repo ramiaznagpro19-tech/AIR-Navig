@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "AIR Navig",
+  "version": "1.0",
+  "description": "Interface, bloqueur et mode sombre d'AIR Navig (extension intégrée au moteur AIRCore).",
+  "browser_specific_settings": {
+    "gecko": { "id": "air@airnavig.app" }
+  },
+  "permissions": [
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}

@@ -1,269 +1,194 @@
 package app.airnavig;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Process;
-import android.view.View;
-import android.webkit.CookieManager;
-import android.webkit.DownloadListener;
-import android.webkit.GeolocationPermissions;
-import android.webkit.PermissionRequest;
-import android.webkit.RenderProcessGoneDetail;
-import android.webkit.SslErrorHandler;
-import android.net.http.SslError;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
-import android.webkit.WebStorage;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import java.io.ByteArrayInputStream;
-import java.io.File;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import java.util.List;
+import org.mozilla.geckoview.AllowOrDeny;
+import org.mozilla.geckoview.GeckoResult;
+import org.mozilla.geckoview.GeckoSession;
+import org.mozilla.geckoview.GeckoSessionSettings;
+import org.mozilla.geckoview.GeckoView;
+import org.mozilla.geckoview.WebResponse;
 
-/** Bac à sable AIR Navig : processus séparé, aucun accès sensible, tout est effacé à la sortie. */
+/**
+ * Bac à sable AIR Navig : le site s'ouvre dans une session privée AIRCore isolée.
+ * Aucun accès au micro, à la caméra, à la position ni aux fichiers ; téléchargements bloqués ;
+ * tout (cookies, cache, historique) est effacé à la fermeture. Le bloqueur reste actif.
+ */
 public class SandboxActivity extends Activity {
-    private static final String SUFFIX = "bacasable";
+    private GeckoSession session;
+    private GeckoView view;
     private TextView urlView;
-    private WebView web;
-    private String[] rules = new String[0];
-    private boolean block = true;
+    private boolean canBack;
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        wipe();
-        if (Build.VERSION.SDK_INT >= 28) {
-            try {
-                WebView.setDataDirectorySuffix(SUFFIX);
-            } catch (Exception unused) {
-            }
+        final String url = getIntent().getStringExtra("url");
+        if (url == null || !(url.startsWith("http://") || url.startsWith("https://"))) {
+            finish();
+            return;
         }
-        getWindow().setStatusBarColor(-14020844);
-        getWindow().setNavigationBarColor(-15789801);
-        String[] stringArrayExtra = getIntent().getStringArrayExtra("rules");
-        if (stringArrayExtra != null && stringArrayExtra.length <= 5000) {
-            this.rules = stringArrayExtra;
-        }
-        this.block = getIntent().getBooleanExtra("block", true);
+        getWindow().setStatusBarColor(0xFF2A0E14);
+        getWindow().setNavigationBarColor(0xFF0F1117);
         float f = getResources().getDisplayMetrics().density;
-        LinearLayout linearLayout = new LinearLayout(this);
-        linearLayout.setOrientation(1);
-        linearLayout.setBackgroundColor(-15789801);
-        LinearLayout linearLayout2 = new LinearLayout(this);
-        linearLayout2.setOrientation(0);
-        linearLayout2.setGravity(16);
-        linearLayout2.setBackgroundColor(-14020844);
-        int i = (int) (12.0f * f);
-        int i2 = (int) (8.0f * f);
-        int i3 = (int) (f * 6.0f);
-        linearLayout2.setPadding(i, i2, i3, i2);
-        LinearLayout linearLayout3 = new LinearLayout(this);
-        linearLayout3.setOrientation(1);
-        TextView textView = new TextView(this);
-        textView.setText("🛡 Bac à sable AIR Navig");
-        textView.setTextColor(-15671);
-        textView.setTypeface(Typeface.DEFAULT_BOLD);
-        textView.setTextSize(2, 14.0f);
-        this.urlView = new TextView(this);
-        this.urlView.setTextColor(-1446927);
-        this.urlView.setTextSize(2, 13.0f);
-        this.urlView.setSingleLine(true);
-        linearLayout3.addView(textView);
-        linearLayout3.addView(this.urlView);
-        linearLayout2.addView(linearLayout3, new LinearLayout.LayoutParams(0, -2, 1.0f));
-        TextView textView2 = new TextView(this);
-        textView2.setText("Quitter");
-        textView2.setTextColor(-1);
-        textView2.setTypeface(Typeface.DEFAULT_BOLD);
-        textView2.setTextSize(2, 14.0f);
-        textView2.setPadding(i, i2, i, i2);
-        textView2.setBackgroundColor(-7723469);
-        textView2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                SandboxActivity.this.finish();
-            }
-        });
-        linearLayout2.addView(textView2);
-        linearLayout.addView(linearLayout2);
-        TextView textView3 = new TextView(this);
-        textView3.setText("Site isolé dans un espace séparé : aucun accès au micro, à la caméra, à ta position ni à tes fichiers. Téléchargements bloqués. Tout est effacé quand tu quittes.");
-        textView3.setTextColor(-7630431);
-        textView3.setTextSize(2, 11.5f);
-        textView3.setPadding(i, i3, i, i3);
-        textView3.setBackgroundColor(-15328990);
-        linearLayout.addView(textView3);
-        this.web = new WebView(this);
-        WebSettings settings = this.web.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setAllowFileAccess(false);
-        settings.setAllowContentAccess(false);
-        settings.setGeolocationEnabled(false);
-        settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setSupportMultipleWindows(false);
-        settings.setUseWideViewPort(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setBuiltInZoomControls(true);
-        settings.setDisplayZoomControls(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setAllowFileAccessFromFileURLs(false);
-        settings.setAllowUniversalAccessFromFileURLs(false);
-        settings.setDatabaseEnabled(false);
-        settings.setSaveFormData(false);
-        settings.setMediaPlaybackRequiresUserGesture(true);
-        if (Build.VERSION.SDK_INT >= 26) {
-            try {
-                settings.setSafeBrowsingEnabled(true);
-            } catch (Throwable ignored) {
-            }
-        }
-        Blocklist.ensureLoaded(getApplicationContext());
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(this.web, false);
-        this.web.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView webView, WebResourceRequest webResourceRequest) {
-                String scheme = webResourceRequest.getUrl().getScheme();
-                return ("http".equals(scheme) || "https".equals(scheme)) ? false : true;
-            }
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setBackgroundColor(0xFF0F1117);
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(16);
+        bar.setBackgroundColor(0xFF2A0E14);
+        int p12 = (int) (12 * f), p8 = (int) (8 * f), p6 = (int) (6 * f);
+        bar.setPadding(p12, p8, p6, p8);
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        TextView title = new TextView(this);
+        title.setText("🛡 Bac à sable AIR Navig");
+        title.setTextColor(0xFFFFC2C9);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setTextSize(2, 14f);
+        urlView = new TextView(this);
+        urlView.setTextColor(0xFFE9EBF1);
+        urlView.setTextSize(2, 13f);
+        urlView.setSingleLine(true);
+        urlView.setText(url);
+        texts.addView(title);
+        texts.addView(urlView);
+        bar.addView(texts, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView quit = new TextView(this);
+        quit.setText("Quitter");
+        quit.setTextColor(0xFFFFFFFF);
+        quit.setTypeface(Typeface.DEFAULT_BOLD);
+        quit.setTextSize(2, 14f);
+        quit.setPadding(p12, p8, p12, p8);
+        quit.setBackgroundColor(0xFF8A2633);
+        quit.setOnClickListener(v -> finish());
+        bar.addView(quit);
+        page.addView(bar);
+        TextView info = new TextView(this);
+        info.setText("Site isolé dans un espace séparé : aucun accès au micro, à la caméra, à ta position ni à tes fichiers. Téléchargements bloqués. Tout est effacé quand tu quittes.");
+        info.setTextColor(0xFF8B91A1);
+        info.setTextSize(2, 11.5f);
+        info.setPadding(p12, p6, p12, p6);
+        info.setBackgroundColor(0xFF16181F);
+        page.addView(info);
+        view = new GeckoView(this);
+        page.addView(view, new LinearLayout.LayoutParams(-1, 0, 1f));
+        setContentView(page);
 
-            @Override
-            public void onReceivedSslError(WebView webView, SslErrorHandler handler, SslError error) {
-                handler.cancel();
-                Toast.makeText(SandboxActivity.this, "Certificat non valide : connexion bloquée", Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onReceivedHttpAuthRequest(WebView webView, android.webkit.HttpAuthHandler h, String host, String realm) {
-                h.cancel();
-            }
-
-            @Override
-            public boolean onRenderProcessGone(WebView webView, RenderProcessGoneDetail detail) {
-                finish();
-                return true;
-            }
-
-            @Override
-            public void onPageStarted(WebView webView, String str, Bitmap bitmap) {
-                SandboxActivity.this.urlView.setText(str);
-            }
-
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView webView, WebResourceRequest webResourceRequest) {
-                Uri url = webResourceRequest.getUrl();
-                String scheme = url.getScheme();
-                if (!"http".equals(scheme) && !"https".equals(scheme)) {
-                    return SandboxActivity.empty();
+        Engine.start(this, () -> {
+            if (isFinishing() || isDestroyed()) return;
+            session = new GeckoSession(new GeckoSessionSettings.Builder()
+                    .usePrivateMode(true)
+                    .suspendMediaWhenInactive(true)
+                    .build());
+            session.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
+                @Override
+                public void onLocationChange(@NonNull GeckoSession s, @Nullable String u,
+                                             @NonNull List<GeckoSession.PermissionDelegate.ContentPermission> perms,
+                                             @NonNull Boolean gesture) {
+                    if (u != null) urlView.setText(u);
                 }
-                String host = url.getHost();
-                if (!SandboxActivity.this.block || host == null || webResourceRequest.isForMainFrame()) {
+
+                @Override
+                public void onCanGoBack(@NonNull GeckoSession s, boolean b) {
+                    canBack = b;
+                }
+
+                @Nullable
+                @Override
+                public GeckoResult<AllowOrDeny> onLoadRequest(@NonNull GeckoSession s, @NonNull LoadRequest r) {
+                    String sc = Uri.parse(r.uri).getScheme();
+                    return "http".equals(sc) || "https".equals(sc) ? GeckoResult.allow() : GeckoResult.deny();
+                }
+
+                @Nullable
+                @Override
+                public GeckoResult<GeckoSession> onNewSession(@NonNull GeckoSession s, @NonNull String uri) {
                     return null;
                 }
-                String str = "." + host.toLowerCase(java.util.Locale.ROOT);
-                for (String str2 : SandboxActivity.this.rules) {
-                    if (str.endsWith(str2)) {
-                        return SandboxActivity.empty();
-                    }
+            });
+            session.setPermissionDelegate(new GeckoSession.PermissionDelegate() {
+                @Override
+                public void onAndroidPermissionsRequest(@NonNull GeckoSession s, @Nullable String[] perms, @NonNull Callback cb) {
+                    cb.reject();
                 }
-                return Blocklist.contains(host) ? SandboxActivity.empty() : null;
-            }
-        });
-        this.web.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onPermissionRequest(PermissionRequest permissionRequest) {
-                permissionRequest.deny();
-            }
 
-            @Override
-            public void onGeolocationPermissionsShowPrompt(String str, GeolocationPermissions.Callback callback) {
-                callback.invoke(str, false, false);
-            }
+                @Nullable
+                @Override
+                public GeckoResult<Integer> onContentPermissionRequest(@NonNull GeckoSession s, @NonNull ContentPermission perm) {
+                    return GeckoResult.fromValue(perm.permission == PERMISSION_AUTOPLAY_INAUDIBLE
+                            ? ContentPermission.VALUE_ALLOW : ContentPermission.VALUE_DENY);
+                }
 
-            @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> valueCallback, WebChromeClient.FileChooserParams fileChooserParams) {
-                valueCallback.onReceiveValue(null);
-                Toast.makeText(SandboxActivity.this, "Envoi de fichiers bloqué dans le bac à sable", 0).show();
-                return true;
-            }
-        });
-        this.web.setDownloadListener(new DownloadListener() {
-            @Override
-            public void onDownloadStart(String str, String str2, String str3, String str4, long j) {
-                Toast.makeText(SandboxActivity.this, "Téléchargement bloqué dans le bac à sable", 1).show();
-            }
-        });
-        linearLayout.addView(this.web, new LinearLayout.LayoutParams(-1, 0, 1.0f));
-        setContentView(linearLayout);
-        String stringExtra = getIntent().getStringExtra("url");
-        if (stringExtra != null && (stringExtra.startsWith("http://") || stringExtra.startsWith("https://"))) {
-            this.urlView.setText(stringExtra);
-            this.web.loadUrl(stringExtra);
-        } else {
-            finish();
-        }
-    }
+                @Override
+                public void onMediaPermissionRequest(@NonNull GeckoSession s, @NonNull String uri, @Nullable MediaSource[] video,
+                                                     @Nullable MediaSource[] audio, @NonNull MediaCallback cb) {
+                    cb.reject();
+                }
+            });
+            session.setPromptDelegate(new GeckoSession.PromptDelegate() {
+                @Nullable
+                @Override
+                public GeckoResult<PromptResponse> onFilePrompt(@NonNull GeckoSession s, @NonNull FilePrompt prompt) {
+                    Toast.makeText(SandboxActivity.this, "Envoi de fichiers bloqué dans le bac à sable", Toast.LENGTH_SHORT).show();
+                    return GeckoResult.fromValue(prompt.dismiss());
+                }
 
-    public static WebResourceResponse empty() {
-        return new WebResourceResponse("text/plain", "utf-8", new ByteArrayInputStream(new byte[0]));
+                @Nullable
+                @Override
+                public GeckoResult<PromptResponse> onAuthPrompt(@NonNull GeckoSession s, @NonNull AuthPrompt prompt) {
+                    return GeckoResult.fromValue(prompt.dismiss());
+                }
+            });
+            session.setContentDelegate(new GeckoSession.ContentDelegate() {
+                @Override
+                public void onExternalResponse(@NonNull GeckoSession s, @NonNull WebResponse response) {
+                    try {
+                        if (response.body != null) response.body.close();
+                    } catch (Exception ignored) {
+                    }
+                    Toast.makeText(SandboxActivity.this, "Téléchargement bloqué dans le bac à sable", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void onCrash(@NonNull GeckoSession s) {
+                    finish();
+                }
+
+                @Override
+                public void onKill(@NonNull GeckoSession s) {
+                    finish();
+                }
+            });
+            session.open(Engine.runtime);
+            view.setSession(session);
+            session.loadUri(url);
+        });
     }
 
     @Override
     public void onBackPressed() {
-        if (this.web == null || !this.web.canGoBack()) {
-            finish();
-        } else {
-            this.web.goBack();
-        }
+        if (session != null && canBack) session.goBack();
+        else finish();
     }
 
     @Override
     protected void onDestroy() {
-        if (this.web != null) {
-            this.web.stopLoading();
-            this.web.clearCache(true);
-            this.web.clearHistory();
-            CookieManager.getInstance().removeAllCookies(null);
-            CookieManager.getInstance().flush();
-            WebStorage.getInstance().deleteAllData();
-            this.web.destroy();
-            this.web = null;
+        try {
+            if (view != null) view.releaseSession();
+        } catch (Throwable ignored) {
         }
+        // Fermer la session privée efface tout ce que le site a stocké.
+        if (session != null) session.close();
         super.onDestroy();
-        wipe();
-        Process.killProcess(Process.myPid());
-    }
-
-    private void wipe() {
-        for (File file : new File[]{new File(getApplicationInfo().dataDir), getCacheDir()}) {
-            File[] listFiles = file.listFiles();
-            if (listFiles != null) {
-                for (File file2 : listFiles) {
-                    if (file2.getName().contains(SUFFIX)) {
-                        delete(file2);
-                    }
-                }
-            }
-        }
-    }
-
-    private static void delete(File file) {
-        File[] listFiles = file.listFiles();
-        if (listFiles != null) {
-            for (File file2 : listFiles) {
-                delete(file2);
-            }
-        }
-        file.delete();
     }
 }

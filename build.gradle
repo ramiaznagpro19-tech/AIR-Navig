@@ -1,0 +1,66 @@
+plugins {
+    id 'com.android.application' version '9.4.1'
+}
+
+def ksFile = System.getenv('KS_FILE')
+def ksPass = System.getenv('KEYSTORE_PASSWORD')
+
+android {
+    namespace = 'app.airnavig'
+    compileSdk = 37
+
+    defaultConfig {
+        applicationId = 'app.airnavig'
+        minSdk = 26
+        targetSdk = 34
+        versionCode = (project.findProperty('vcode') ?: '1') as int
+        versionName = project.findProperty('vname') ?: '1.0'
+        ndk {
+            // Le moteur AIRCore est compilé pour les téléphones 64 bits (arm64-v8a).
+            abiFilters += ['arm64-v8a']
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['java']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (ksFile) {
+                storeFile = file(ksFile)
+                storePassword = ksPass
+                keyAlias = 'air'
+                keyPassword = ksPass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            signingConfig = ksFile ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+}
+
+dependencies {
+    // Coordonnées lues dans aircore-maven/COORDS (fournies par le dépôt AIRCore).
+    implementation project.property('aircore')
+    implementation 'androidx.annotation:annotation:1.11.0'
+}

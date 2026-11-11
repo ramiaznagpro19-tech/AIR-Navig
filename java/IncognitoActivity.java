@@ -1,6 +1,6 @@
 package app.airnavig;
 
-/** Navigation privée AIR Navig : processus séparé, données effacées à la sortie. */
+/** Navigation privée AIR Navig : session privée AIRCore, rien n'est gardé à la fermeture. */
 public class IncognitoActivity extends MainActivity {
     @Override
     protected boolean incognito() {

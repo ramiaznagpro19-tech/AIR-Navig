@@ -1,37 +1,23 @@
 # AIR Navig 1.0 — code source
 
-AIR Navig est un navigateur de la marque **AIR**, créé par **Rami**, un peu passionné de développement.
+## Moteur : AIRCore (Gecko), plus aucun WebView
+Depuis cette version, AIR Navig n'utilise plus le WebView d'Android. Tout passe par **AIRCore**, le moteur
+Gecko sans télémétrie compilé dans le dépôt https://github.com/ramiaznagpro19-tech/AIRCore.
 
-## Contenu
-- `java/` : code de l'appli (MainActivity, IncognitoActivity, SandboxActivity, Blocklist, Updater)
-- `assets/` : interface (chrome.html), pages internes (home, blocked, error)
-- `AndroidManifest.xml`, `res/xml/network_security_config.xml`
-- La liste de blocage (`assets/blocklist.txt`) vient de https://github.com/StevenBlack/hosts (licence MIT, voir `blocklist-LICENSE.txt`).
+| Avant (WebView) | Maintenant (AIRCore / Gecko) |
+|---|---|
+| Interface `chrome.html` dans un WebView + `addJavascriptInterface` | Interface dans une session Gecko, page d'une **extension intégrée** (`assets/air/`), pont par **messagerie native** (`bridge.js` ↔ `MainActivity`) |
+| Bloqueur dans `shouldInterceptRequest` | Bloqueur dans `background.js` (`webRequest` bloquant), même liste StevenBlack + règles perso |
+| Mode sombre forcé par `evaluateJavascript` | `content.js` de l'extension + thème préféré annoncé aux sites |
+| `WebChromeClient` (dialogues, fichiers, permissions) | `Prompts.java`, `Perms.java` (listes déroulantes, dates, fichiers, caméra/micro/position site par site) |
+| Navigation privée / bac à sable dans des processus WebView séparés | Sessions **privées** Gecko : rien n'est gardé à la fermeture |
+| Compilation `javac` + `apktool` | Compilation **Gradle** (le moteur arrive comme bibliothèque Android) |
 
-## Mises à jour de l'appli
-Renseigner `Updater.UPDATE_URL` (adresse HTTPS d'un fichier JSON) :
-`{"versionCode": 7, "versionName": "1.4", "url": "https://…/AIR-Navig.apk", "sha256": "…", "notes": "…"}`
-L'appli refuse tout APK dont l'empreinte ou la signature diffère de la clé AIR.
+Fichiers principaux : `java/Engine.java` (moteur partagé + extension), `java/MainActivity.java`,
+`java/Prompts.java`, `java/Perms.java`, `java/SandboxActivity.java`, `assets/air/*`.
 
-## Compiler (sans Android Studio)
-    javac --release 8 -cp android.jar -d classes java/*.java
-    java -cp r8.jar com.android.tools.r8.D8 --release --min-api 24 --lib android.jar --output . classes/app/airnavig/*.class
-puis reconstruire avec apktool et signer avec la clé `air-navig.jks` (alias `air`).
-
-## Licence
-À choisir par Rami (par exemple MIT ou GPL-3.0) avant publication du dépôt.
-
-## Version 3.2 personnalisée (interface uniquement)
-Modifications dans `assets/chrome.html` et `assets/home.html` (le code Java n'a pas changé) :
-- **Réglages réorganisés** en catégories : Protections, Thèmes et apparence, Barre et boutons, Page d'accueil, Moteur, Autorisations.
-- **Anti-pubs / anti-traqueurs activables et désactivables** : interrupteur général « Toutes les protections », interrupteurs séparés (liste StevenBlack, réseaux nommés, liens piégés, sites dangereux, mode discret), **liste de blocage perso**, **pause des protections site par site** (aussi depuis le Bouclier).
-- **5 thèmes mélangés** façon « colorways » de Firefox : Aurore boréale, Crépuscule, Abysses (sombres), Barbe à papa, Agrumes (clairs). Auto / Noir / Blanc sont conservés.
-- **Apparence** : couleur d'accent (palette ou code #hex), police, arrondis, taille du texte des menus, animations, contours.
-- **Barre** : position, taille (compacte/normale/grande), choix des boutons affichés.
-- **Accueil** : fond (thème, 10 dégradés, couleur unie, photo importée du téléphone, assombrissement, flou), message de bienvenue avec prénom, message perso, éléments affichés, position et taille, bouton ✎ Personnaliser.
-- Menu ⋯ : « Thèmes », « Protections », « Personnaliser l'accueil ».
-- Le bouton ✎ Personnaliser ne peut plus être masqué (style complet ou discret) ; entrée « Personnaliser l'accueil » dans le menu ⋯.
-- Retirés à la demande : fond par lien, horloge, titre perso, et tous les raccourcis de sites sur l'accueil (avec leurs logos et l'option pour en ajouter).
+L'APK pèse plus lourd qu'avant (un vrai moteur de navigateur est embarqué) et ne fonctionne que sur les
+téléphones 64 bits (arm64-v8a), soit la quasi-totalité des téléphones récents.
 
 ## Version 3.3 — chargement plus rapide
 Le moteur reste le WebView du système (Blink/V8, le même que Chrome). La lenteur venait de la façon dont l'appli l'utilisait :

@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>AIR Navig</title>
+<style>
+[hidden]{display:none!important}
+:root{--bg:#000;--bar:#000;--bar2:#161616;--line:#2a2a2a;--text:#fff;--muted:#9a9a9a;--accent:#8b7cff;--accent2:#5ee0c3;--danger:#ff6b7a;--warn:#ffb648}
+html.light{--bg:#fff;--bar:#fff;--bar2:#f1f1f1;--line:#e0e0e0;--text:#000;--muted:#5f5f5f;--accent:#6b5ce7;--accent2:#0b8f75;--danger:#d93448;--warn:#b86e00;color-scheme:light}
+html{color-scheme:dark}
+html.light #banner{color:#a3192b}
+html.light #banner button{color:#a3192b;background:rgba(217,52,72,.14)}
+html.light #addr .ph b,html.light .brandmini{color:#5a4bd6}
+.seg{display:flex;gap:6px;flex:none}
+.seg button{padding:8px 14px;border-radius:calc(18px*var(--rs,1));border:1px solid var(--line);background:var(--bar2);font-weight:650;font-size:13.5px}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;user-select:none;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.logo{width:22px;height:22px;object-fit:contain;flex:none}
+
+/* ---------- Barre repliée ---------- */
+#bar{background:var(--bar);border-top:1px solid var(--line)}
+#prog{height:2px;background:transparent}
+#prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s,opacity .4s}
+#banner{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,107,122,.12);border-bottom:1px solid rgba(255,107,122,.35);color:#ffc2c9;font-size:13px;line-height:1.3}
+#banner svg{width:20px;height:20px;color:var(--danger);flex:none}
+#banner span{flex:1}
+#banner button{padding:6px 10px;border-radius:calc(14px*var(--rs,1));background:rgba(255,107,122,.2);color:#fff;font-weight:600;font-size:12.5px;white-space:nowrap}
+#notice{padding:8px 14px;font-size:13px;color:var(--accent2);background:rgba(94,224,195,.08);border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.omni{display:flex;align-items:center;gap:6px;margin:8px 10px 4px;height:46px;padding:0 6px;background:var(--bar2);border:1px solid var(--line);border-radius:calc(23px*var(--rs,1))}
+#engBtn{display:flex;align-items:center;gap:2px;height:36px;padding:0 4px 0 8px;border-radius:calc(18px*var(--rs,1))}
+#engBtn .caret{width:14px;height:14px;color:var(--muted)}
+#addr{flex:1;min-width:0;display:flex;align-items:center;gap:6px;height:100%;text-align:left}
+#addr .lock{width:15px;height:15px;color:var(--accent2);flex:none}
+#addr .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+#addr .ph{color:var(--muted)}
+#addr .ph b{color:#b9b2ff;font-weight:700}
+#shieldBtn{display:flex;align-items:center;gap:4px;height:30px;padding:0 9px;border-radius:calc(15px*var(--rs,1));background:rgba(94,224,195,.12);color:var(--accent2);font-weight:700;font-size:13px}
+#shieldBtn svg{width:16px;height:16px}
+#shieldBtn.off{background:var(--bar2);color:var(--muted)}
+#shieldBtn.iso{background:rgba(255,107,122,.16);color:var(--danger)}
+.nav{display:flex;justify-content:space-around;align-items:center;height:52px}
+.nav button{width:52px;height:44px;display:grid;place-items:center;border-radius:calc(12px*var(--rs,1))}
+.nav button:active{background:var(--bar2)}
+.nav button:disabled{opacity:.3}
+#tabCount{display:grid;place-items:center;min-width:24px;height:24px;padding:0 4px;border:2px solid currentColor;border-radius:calc(7px*var(--rs,1));font-size:12px;font-weight:800}
+
+/* ---------- Écrans pleine hauteur ---------- */
+#full{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.fhead{display:flex;align-items:center;gap:10px;padding:12px 12px 10px;border-bottom:1px solid var(--line);background:var(--bar)}
+.brandmini{display:flex;align-items:center;gap:7px;font-weight:800;letter-spacing:.12em;font-size:12px;color:#b9b2ff;text-transform:uppercase;white-space:nowrap}
+.brandmini img{width:20px;height:17px;object-fit:contain}
+.brandmini i{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+.fhead h2{flex:1;margin:0;font-size:16px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fhead .x{width:40px;height:40px;display:grid;place-items:center;border-radius:calc(12px*var(--rs,1))}
+.fbody{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
+.sec{display:none}
+.sec.on{display:block}
+.card{background:var(--bar);border:1px solid var(--line);border-radius:calc(16px*var(--rs,1));padding:12px;margin-bottom:12px}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+.h{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 4px 8px}
+
+/* Recherche */
+#sInput{width:100%;height:50px;padding:0 16px;border-radius:calc(25px*var(--rs,1));border:1px solid var(--accent);background:var(--bar);color:var(--text);font:inherit;font-size:16px;outline:none;user-select:text}
+.chips{display:flex;gap:8px;margin:12px 0 4px;overflow-x:auto}
+.chips::-webkit-scrollbar{display:none}
+.chip{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:calc(20px*var(--rs,1));border:1px solid var(--line);background:var(--bar);white-space:nowrap;font-size:14px}
+.chip.cur{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,124,255,.25)}
+.chip .logo{width:18px;height:18px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 10px;border-radius:calc(12px*var(--rs,1));width:100%;text-align:left}
+.row:active{background:var(--bar2)}
+.row .t{flex:1;min-width:0}
+.row .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row svg,.row img{width:20px;height:20px;flex:none;color:var(--muted);object-fit:contain}
+.row .v{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.row .del{width:34px;height:34px;display:grid;place-items:center;color:var(--muted)}
+
+/* Moteurs */
+.eng{display:flex;align-items:center;gap:14px;width:100%;padding:14px;margin-bottom:10px;border-radius:calc(16px*var(--rs,1));border:1px solid var(--line);background:var(--bar);text-align:left}
+.eng.cur{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,124,255,.25)}
+.eng .logo{width:34px;height:34px}
+.eng b{display:block;font-size:16px}
+.eng small{color:var(--muted)}
+.eng .ck{margin-left:auto;color:var(--accent);opacity:0}
+.eng.cur .ck{opacity:1}
+
+/* Menu */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px;border-radius:calc(16px*var(--rs,1));background:var(--bar);border:1px solid var(--line);font-size:12.5px;text-align:center}
+.tool.on{border-color:var(--accent);color:var(--accent)}
+.tool.danger.on{border-color:var(--danger);color:var(--danger)}
+.links .row{background:var(--bar);border:1px solid var(--line);margin-bottom:8px;border-radius:calc(14px*var(--rs,1))}
+.links .row svg{color:var(--accent)}
+.badge{min-width:22px;padding:2px 8px;border-radius:calc(11px*var(--rs,1));background:var(--bar2);color:var(--muted);font-size:12px;font-weight:700}
+
+/* Bouclier */
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.big3 div{padding:12px 6px;border-radius:calc(14px*var(--rs,1));background:var(--bar);border:1px solid var(--line);text-align:center}
+.big3 b{display:block;font-size:22px;color:var(--accent2)}
+.big3 span{font-size:11.5px;color:var(--muted)}
+.ev{display:flex;gap:10px;padding:11px 12px;border-radius:calc(14px*var(--rs,1));background:var(--bar);border:1px solid var(--line);margin-bottom:8px;font-size:13.5px;line-height:1.4}
+.ev .dot{width:30px;height:30px;border-radius:calc(9px*var(--rs,1));display:grid;place-items:center;flex:none;background:rgba(94,224,195,.12);color:var(--accent2)}
+.ev .dot svg{width:17px;height:17px}
+.ev.iso .dot{background:rgba(255,107,122,.15);color:var(--danger)}
+.ev.clean .dot{background:rgba(139,124,255,.15);color:var(--accent)}
+.ev b{font-weight:650}
+.ev small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.ev .n{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+
+/* Onglets */
+.tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tcard{position:relative;display:flex;flex-direction:column;gap:10px;min-height:104px;padding:12px;border-radius:calc(16px*var(--rs,1));background:var(--bar);border:1px solid var(--line);text-align:left}
+.tcard.cur{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,124,255,.3)}
+.tcard img{width:28px;height:28px;object-fit:contain}
+.tcard .t{font-size:13.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tcard .c{position:absolute;top:6px;right:6px;width:32px;height:32px;display:grid;place-items:center;color:var(--muted)}
+.tcard .c svg{width:16px;height:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:calc(22px*var(--rs,1));background:var(--accent);color:#fff;font-weight:650}
+.btn.ghost{background:var(--bar);border:1px solid var(--line);color:var(--text)}
+.btn.red{background:none;border:1px solid rgba(255,107,122,.5);color:var(--danger)}
+
+/* Réglages */
+.set{display:flex;align-items:center;gap:12px;padding:13px 12px;border-bottom:1px solid var(--line)}
+.set:last-child{border-bottom:0}
+.set .t{flex:1}
+.set small{display:block;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.35}
+.sw{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:calc(13px*var(--rs,1));background:var(--line);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw:checked{background:var(--accent)}
+.sw:checked::after{transform:translateX(18px)}
+textarea{width:100%;min-height:200px;padding:12px;border-radius:calc(14px*var(--rs,1));border:1px solid var(--line);background:var(--bar);color:var(--text);font:inherit;line-height:1.5;outline:none;user-select:text}
+.seg3{flex-direction:column;align-items:stretch}
+.seg3 .seg{width:100%}
+.seg3 .seg button{flex:1;padding:9px 6px}
+#prog i{width:var(--p,0%)}
+
+/* ---------- Barre en haut (façon Google Chrome) ---------- */
+html.pos-top #bar{display:flex;flex-direction:column;border-top:0;border-bottom:1px solid var(--line)}
+html.pos-top #row{display:flex;align-items:center;gap:2px;padding:0 4px 0 2px}
+html.pos-top #prog{order:5}
+html.pos-top #banner,html.pos-top #notice{order:6;border-bottom:0;border-top:1px solid var(--line)}
+html.pos-top .omni{flex:1;min-width:0;margin:8px 4px;height:44px}
+html.pos-top .nav{display:contents}
+html.pos-top #bBack,html.pos-top #bFwd{display:none}
+html.pos-top #bHome{order:-1}
+html.pos-top .nav button{width:42px;height:42px}
+
+/* ---------- Barre à droite (rail vertical moderne) ---------- */
+html.pos-right #bar{position:relative;height:100vh;display:flex;flex-direction:column;border-top:0;border-left:1px solid var(--line)}
+html.pos-right #banner,html.pos-right #notice{display:none!important}
+html.pos-right #prog{position:absolute;left:0;top:0;bottom:0;width:2px;height:auto}
+html.pos-right #prog i{width:100%;height:var(--p,0%)}
+html.pos-right #row{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;padding:8px 0 calc(6px + env(safe-area-inset-bottom))}
+html.pos-right .omni{flex:1;min-height:0;flex-direction:column;width:52px;height:auto;margin:0 0 8px;padding:6px 0;border-radius:calc(26px*var(--rs,1));gap:8px}
+html.pos-right #engBtn{padding:0;width:40px;height:40px;justify-content:center;flex:none}
+html.pos-right #engBtn .caret{display:none}
+html.pos-right #addr{writing-mode:vertical-rl;flex:1;min-height:0;width:100%;height:auto;justify-content:flex-start;align-items:center;padding:4px 0;gap:8px}
+html.pos-right #addr .t{font-size:14px;max-height:100%}
+html.pos-right #shieldBtn{flex-direction:column;height:auto;width:40px;padding:7px 0;gap:2px;justify-content:center;border-radius:calc(20px*var(--rs,1));flex:none}
+html.pos-right .nav{flex-direction:column;height:auto;gap:2px;flex:none}
+html.pos-right .nav button{width:48px;height:46px}
+/* ---------- Navigation privée ---------- */
+#incogTag{display:none;align-items:center;gap:4px;height:26px;padding:0 9px;border-radius:calc(13px*var(--rs,1));background:var(--text);color:var(--bg);font-weight:800;font-size:12px;flex:none}
+#incogTag svg{width:15px;height:15px}
+html.incog #incogTag{display:flex}
+html.incog #prog i{background:var(--text)}
+html.pos-right #incogTag{padding:0;width:34px;height:34px;justify-content:center;border-radius:calc(17px*var(--rs,1))}
+html.pos-right #incogTag span,html.pos-top #incogTag span{display:none}
+html.pos-top #incogTag{padding:0;width:28px;justify-content:center}
+.bar-track{height:5px;margin:-4px 10px 6px 42px;background:var(--bar2);border-radius:calc(3px*var(--rs,1));overflow:hidden}
+.bar-track i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.why li{margin:8px 0;line-height:1.45}
+
+/* ---------- Personnalisation (v3.2) ---------- */
+html,body{font-family:var(--font,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif)}
+.btn,.seg button.on{color:var(--onaccent,#fff)}
+#full .fbody,#full .fhead h2{zoom:var(--zf,1)}
+html.bar-s .omni{height:40px;margin-top:6px}html.bar-s .nav{height:44px}html.bar-s .nav button{height:38px}
+html.bar-l .omni{height:54px;margin-top:10px}html.bar-l .nav{height:60px}html.bar-l .nav button{height:52px;width:58px}
+html.bar-l svg{width:25px;height:25px}
+html.hide-back #bBack,html.hide-fwd #bFwd,html.hide-home #bHome,html.hide-tabs #bTabs,html.hide-shield #shieldBtn,html.hide-engine #engBtn{display:none!important}
+html.noanim *,html.noanim *::after{transition:none!important;animation:none!important}
+html.flat .omni{border-color:transparent}
+/* Thèmes mélangés façon « colorways » de Firefox : dégradés sur la barre et les écrans */
+html.grad #bar{background:var(--grad);background-size:100% 100%}
+html.grad #full{background:var(--grad) fixed}
+html.grad .fhead{background:transparent}
+html.grad .card,html.grad .tool,html.grad .eng,html.grad .tcard,html.grad .chip,html.grad .ev,html.grad .big3 div,html.grad .links .row{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+html.th-aurora{--bg:#071521;--bar:rgba(8,28,40,.62);--bar2:rgba(255,255,255,.09);--line:rgba(150,255,225,.18);--text:#eafff8;--muted:#a3cdc6;--accent:#7cf2c4;--accent2:#c3a0ff;--onaccent:#04231a;--grad:linear-gradient(135deg,#0b1d2b 0%,#145a63 48%,#5b2a86 100%)}
+html.th-sunset{--bg:#1f0b24;--bar:rgba(40,10,36,.55);--bar2:rgba(255,255,255,.1);--line:rgba(255,190,150,.22);--text:#fff3ec;--muted:#e9bfb0;--accent:#ffb36b;--accent2:#ff7aa8;--onaccent:#3a1300;--grad:linear-gradient(135deg,#2a0f3a 0%,#8a2c5f 52%,#ff7a45 100%)}
+html.th-ocean{--bg:#020b1f;--bar:rgba(3,18,44,.6);--bar2:rgba(255,255,255,.08);--line:rgba(120,210,255,.2);--text:#e8f7ff;--muted:#9fc3d8;--accent:#3fd0ff;--accent2:#7af0d6;--onaccent:#00243a;--grad:linear-gradient(160deg,#020b1f 0%,#0a3a6b 55%,#0f8aa0 100%)}
+html.th-candy{--bg:#fdeefa;--bar:rgba(255,255,255,.62);--bar2:rgba(255,255,255,.7);--line:rgba(160,110,200,.22);--text:#2b1838;--muted:#76618a;--accent:#d6408f;--accent2:#5b6cff;--onaccent:#fff;--grad:linear-gradient(135deg,#ffd6ec 0%,#e3dcff 50%,#cfefff 100%);color-scheme:light}
+html.th-citrus{--bg:#fff7e6;--bar:rgba(255,255,255,.6);--bar2:rgba(255,255,255,.72);--line:rgba(200,130,40,.22);--text:#2e2410;--muted:#7a6a48;--accent:#d9660b;--accent2:#14916a;--onaccent:#fff;--grad:linear-gradient(135deg,#fff1c2 0%,#ffd8bf 50%,#d4f5e1 100%);color-scheme:light}
+/* Choix du thème */
+.thgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.th{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 6px 9px;border-radius:calc(16px*var(--rs,1));border:1px solid var(--line);background:var(--bar);font-size:12.5px;text-align:center}
+.th i{display:block;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,255,255,.35);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.th.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.th small{display:block;color:var(--muted);font-size:11px}
+.dots{display:flex;flex-wrap:wrap;gap:10px;padding:4px 2px}
+.dots button{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:700}
+.dots button.on{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--accent)}
+.inp{width:100%;height:44px;padding:0 14px;border-radius:calc(12px*var(--rs,1));border:1px solid var(--line);background:var(--bar2);color:var(--text);font:inherit;outline:none;user-select:text}
+.inp:focus{border-color:var(--accent)}
+.set .inp{flex:none}
+.sc{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line)}
+.sc:last-child{border-bottom:0}
+.sc img{width:22px;height:22px;object-fit:contain}
+.sc .t{flex:1;min-width:0}.sc .t div,.sc .t small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc .t small{display:block;color:var(--muted);font-size:12px}
+.sc button{width:34px;height:34px;display:grid;place-items:center;color:var(--muted)}
+.sc button svg{width:18px;height:18px}
+.rng{width:100%;accent-color:var(--accent)}
+.pill{display:inline-block;padding:2px 8px;border-radius:calc(10px*var(--rs,1));font-size:11px;font-weight:700;background:rgba(94,224,195,.14);color:var(--accent2)}
+.pill.off{background:rgba(255,107,122,.14);color:var(--danger)}
+.master{display:flex;align-items:center;gap:12px;padding:14px;border-radius:calc(16px*var(--rs,1));margin-bottom:12px;border:1px solid var(--line);background:var(--bar)}
+.master .ic{width:44px;height:44px;border-radius:calc(14px*var(--rs,1));display:grid;place-items:center;background:rgba(94,224,195,.14);color:var(--accent2);flex:none}
+.master.off .ic{background:rgba(255,107,122,.14);color:var(--danger)}
+.master .t{flex:1}.master b{font-size:16px}
+.master small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+</style>
+</head>
+<body>
+
+<!-- ===== Barre AIR Navig (repliée) ===== -->
+<div id="bar">
+  <div id="banner" hidden>
+    <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M12 8v5M12 16h.01"/></svg>
+    <span>Site suspect : <b>mode isolé</b> activé. Le site reste ouvert, mais sans cookies, fichiers, position ni téléchargements.</span>
+    <button id="whyBtn">Pourquoi ?</button>
+  </div>
+  <div id="notice" hidden></div>
+  <div id="prog"><i></i></div>
+  <div id="row">
+  <div class="omni">
+    <span id="incogTag" title="Navigation privée"><svg viewBox="0 0 24 24"><path d="M3 11h18M6 11l2-6h8l2 6"/><circle cx="7.5" cy="16" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M10 16h4"/></svg><span>Privé</span></span>
+    <button id="engBtn" aria-label="Choisir le moteur"><img class="logo" id="engLogo" alt=""><svg class="caret" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></button>
+    <button id="addr"></button>
+    <button id="shieldBtn" aria-label="Bouclier"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span id="shieldN">0</span></button>
+  </div>
+  <div class="nav">
+    <button id="bBack" aria-label="Précédent"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button id="bFwd" aria-label="Suivant"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+    <button id="bHome" aria-label="Accueil"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></button>
+    <button id="bTabs" aria-label="Onglets"><span id="tabCount">1</span></button>
+    <button id="bMenu" aria-label="Menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></button>
+  </div>
+  </div>
+</div>
+
+<!-- ===== Écrans pleine hauteur ===== -->
+<div id="full" hidden>
+  <div class="fhead">
+    <div class="brandmini"><img src="data:image/png;base64,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" alt="">AIR Navig</div>
+    <h2 id="fTitle"></h2>
+    <button class="x" id="fClose" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="fbody">
+    <section class="sec" data-s="search">
+      <input id="sInput" type="search" enterkeyhint="go" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Rechercher ou saisir une adresse">
+      <div class="chips" id="sChips"></div>
+      <div id="sList"></div>
+    </section>
+
+    <section class="sec" data-s="engines">
+      <p class="muted small" style="margin:2px 4px 14px">Choisis le moteur utilisé par la barre de recherche d’AIR Navig.</p>
+      <div id="engList"></div>
+      <p class="muted small" style="margin:6px 4px">Astuce : tape <b>!g</b>, <b>!d</b> ou <b>!b</b> avant ta recherche pour changer de moteur une seule fois.</p>
+    </section>
+
+    <section class="sec" data-s="menu">
+      <div class="grid" id="tools"></div>
+      <div class="h">AIR Navig</div>
+      <div class="links" id="links"></div>
+    </section>
+
+    <section class="sec" data-s="shield">
+      <div class="big3"><div><b id="kBlocked">0</b><span>traqueurs bloqués</span></div><div><b id="kClean">0</b><span>liens nettoyés</span></div><div><b id="kIso">0</b><span>sites bloqués</span></div></div>
+      <div class="card small" id="shieldSite"></div>
+      <div class="h">Qui a voulu faire quoi</div>
+      <div id="evList"></div>
+    </section>
+
+    <section class="sec" data-s="why">
+      <div class="card"><b id="whyHost"></b><ul class="why" id="whyList"></ul></div>
+      <div class="card small muted">
+        <b style="color:var(--text)">Ce que fait le mode isolé</b><br>
+        Le site reste ouvert et utilisable, mais AIR Navig : bloque ses cookies, coupe l’accès aux fichiers et à ta position, empêche les fenêtres automatiques, refuse tout téléchargement, et efface les données du site dès que tu le quittes.
+      </div>
+      <button class="btn" id="isoExit">Ouvrir dans le bac à sable</button>
+    </section>
+
+    <section class="sec" data-s="tabs">
+      <div style="display:flex;gap:10px;margin-bottom:12px"><button class="btn" id="tNew">+ Nouvel onglet</button><button class="btn ghost" id="tCloseAll">Tout fermer</button></div>
+      <div class="tabs" id="tabList"></div>
+    </section>
+
+    <section class="sec" data-s="bookmarks"><div id="bmList"></div></section>
+    <section class="sec" data-s="history"><button class="btn red" id="hClear" style="margin-bottom:10px">Effacer l’historique</button><div id="hList"></div></section>
+    <section class="sec" data-s="notes">
+      <p class="muted small" style="margin:2px 4px 10px">Notes pour <b id="nHost" style="color:var(--accent2)"></b> — elles réapparaissent à chaque visite.</p>
+      <textarea id="nText" placeholder="Écris ici…"></textarea>
+      <div class="h">Tous les sites annotés</div><div id="nList"></div>
+    </section>
+    <section class="sec" data-s="time"><div id="tmList"></div></section>
+    <section class="sec" data-s="perms">
+      <p class="muted small" style="margin:2px 4px 12px">Aucun site n’a accès au micro, à la caméra ou à ta position sans ton accord : AIR Navig te le demande pour chaque site. Coupe un accès ici pour qu’aucun site ne puisse même le demander. Le bac à sable, lui, refuse toujours tout.</p>
+      <div class="card" style="padding:0 4px" id="permList"></div>
+      <button class="btn red" id="forgetPerms" style="margin-top:12px">Oublier les accès donnés aux sites</button>
+    </section>
+    <section class="sec" data-s="about">
+      <div class="card" style="padding:16px 14px;text-align:center">
+        <div style="font-weight:900;font-size:30px;letter-spacing:.18em">AIR</div>
+        <div class="muted small" style="margin-top:2px">AIR Navig · une marque AIR</div>
+        <p style="margin:14px 4px 4px;line-height:1.5">AIR Navig a été créé par <b>Rami</b>, un peu passionné de développement.</p>
+        <p class="muted small" id="abVer" style="margin:6px 4px 0"></p>
+      </div>
+      <div class="h">Sécurité de cette version</div>
+      <div class="card" style="padding:10px 14px"><ul class="small" style="margin:0;padding-left:18px;line-height:1.55">
+        <li>Pont Android réservé à l’interface d’AIR Navig : aucun site ne peut l’utiliser.</li>
+        <li>HTTPS d’abord : les adresses HTTP passent en HTTPS, le HTTP n’est utilisé qu’avec ton accord.</li>
+        <li>Erreurs de certificat : la connexion est toujours coupée, sans contournement possible.</li>
+        <li>Seuls les certificats officiels du téléphone sont acceptés (pas ceux ajoutés par une appli).</li>
+        <li>Micro, caméra, position : confirmation pour chaque site.</li>
+        <li>Fichiers locaux coupés par défaut ; une page locale ne peut jamais lire tes autres fichiers.</li>
+        <li>Les protections anti-intégration des sites (anti-clickjacking) sont respectées.</li>
+        <li>Liens vers d’autres applis : confirmation avant ouverture.</li>
+        <li>Google Safe Browsing actif, contenu mixte bloqué, pages qui plantent isolées.</li>
+      </ul></div>
+      <div class="h">Liste de blocage</div>
+      <div class="card" style="padding:12px 14px"><div class="small" id="abList" style="line-height:1.55"></div>
+        <button class="btn" id="abUpdList" style="margin-top:10px">Mettre à jour la liste maintenant</button></div>
+      <div class="h">Mises à jour</div>
+      <div class="card" style="padding:12px 14px"><div class="small" id="abUpd" style="line-height:1.55"></div>
+        <button class="btn" id="abUpdApp" style="margin-top:10px">Vérifier les mises à jour</button></div>
+      <div class="h">Signature</div>
+      <div class="card" style="padding:12px 14px"><div class="small muted" style="line-height:1.5">APK signé par Rami pour la marque AIR. Empreinte SHA-256 du certificat :</div><div class="small" id="abSig" style="word-break:break-all;font-family:monospace;margin-top:6px"></div></div>
+    </section>
+    <section class="sec" data-s="settings"><div class="card" style="padding:0 4px" id="setCats"></div><div class="card" style="padding:0 4px" id="setList"></div>
+      <button class="btn red" id="wipe">Effacer cookies, cache et données des sites</button>
+      <button class="btn ghost" id="resetLook" style="margin-top:10px">Remettre l’apparence par défaut</button>
+    </section>
+    <section class="sec" data-s="set_prot"><div id="protBody"></div></section>
+    <section class="sec" data-s="set_look"><div id="lookBody"></div></section>
+    <section class="sec" data-s="set_bar"><div id="barBody"></div></section>
+    <section class="sec" data-s="set_home"><div id="homeBody"></div></section>
+  </div>
+</div>
+
+<script src="bridge.js"></script>
+<script src="chrome.js"></script>
+</body>
+</html>

@@ -99,7 +99,7 @@ final class Blocklist {
         }
         if (set.size() < MIN_DOMAINS) return false;
         hosts = set;
-        MainActivity.verdicts.clear();
+        Engine.sendHosts();
         date = d;
         sha256 = sum;
         origin = from;
@@ -179,7 +179,7 @@ final class Blocklist {
             File dst = new File(ctx.getFilesDir(), FILE);
             if (!tmp.renameTo(dst)) return "Impossible d'enregistrer la liste";
             hosts = set;
-            MainActivity.verdicts.clear();
+            Engine.sendHosts();
             date = srcDate;
             sha256 = hex.toString();
             origin = "mise à jour automatique";

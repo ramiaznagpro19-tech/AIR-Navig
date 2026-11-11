@@ -1,83 +1,98 @@
-# Compile AIR Navig et publie l'APK signé dans « Releases » à chaque envoi sur main.
-# Un seul secret à créer (Settings › Secrets and variables › Actions) :
-#   KEYSTORE_PASSWORD : mot de passe de la clé (alias « air »).
-# La clé elle-même est dans base/signing-key.jks.enc, chiffrée en AES-256 avec ce mot de passe.
+# Compile AIR Navig (moteur AIRCore / Gecko) et publie l'APK signé dans « Releases ».
+# Branche main : version publiée. Branche gecko : version d'essai (pré-version).
+# Secret requis : KEYSTORE_PASSWORD (la clé chiffrée est dans base/signing-key.jks.enc).
 name: Compiler l'APK
 
 on:
   push:
-    branches: [main]
+    branches: [main, gecko]
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
-      - name: Outils Android
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" > /dev/null
-          echo "BT=$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_ENV"
-          echo "AJAR=$ANDROID_HOME/platforms/android-34/android.jar" >> "$GITHUB_ENV"
-          curl -sSL -o apktool.jar https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.8.1'
 
       - name: Version
         run: |
           echo "VCODE=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
           echo "VNAME=1.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
 
-      - name: Compiler le code Java
+      - name: Récupérer le moteur AIRCore
         run: |
-          mkdir -p build/classes build/dex
-          javac --release 8 -encoding UTF-8 -nowarn -cp "$AJAR" -d build/classes java/*.java
-          "$BT/d8" --release --min-api 24 --lib "$AJAR" --output build/dex $(find build/classes -name '*.class')
+          curl -fsSL -o aircore-maven.zip https://github.com/ramiaznagpro19-tech/AIRCore/releases/latest/download/aircore-maven.zip
+          unzip -q -o aircore-maven.zip -d aircore-maven
+          echo "AIRCORE=$(cat aircore-maven/COORDS)" >> "$GITHUB_ENV"
+          cat aircore-maven/COORDS
 
-      - name: Assembler l'APK
+      - name: Plateforme Android
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" > /dev/null || true
+
+      - name: Code source embarqué
         run: |
-          java -jar apktool.jar d -s -f base/AIR-Navig-base.apk -o build/dec
-          cp build/dex/classes.dex build/dec/classes.dex
-          cp assets/* build/dec/assets/
-          cp -r res/. build/dec/res/
-          cp AndroidManifest.xml build/dec/AndroidManifest.xml
-          # Code source embarqué dans l'appli
-          mkdir -p build/src/AIR-Navig-source
-          cp -r java assets res AndroidManifest.xml build/src/AIR-Navig-source/
-          rm -f build/src/AIR-Navig-source/assets/blocklist.txt
+          rm -rf build/src && mkdir -p build/src/AIR-Navig-source
+          cp -r java res AndroidManifest.xml build.gradle settings.gradle build/src/AIR-Navig-source/
+          mkdir -p build/src/AIR-Navig-source/assets && cp -r assets/air build/src/AIR-Navig-source/assets/
           cp README.md build/src/AIR-Navig-source/LISEZMOI.md
-          rm -f build/dec/assets/AIR-Navig-source.zip
-          (cd build/src && zip -qr -X ../dec/assets/AIR-Navig-source.zip AIR-Navig-source)
-          sed -i -E "s/^  versionCode: .*/  versionCode: ${VCODE}/; s/^  versionName: .*/  versionName: '${VNAME}'/" build/dec/apktool.yml
-          java -jar apktool.jar b build/dec -o build/unsigned.apk
-          "$BT/zipalign" -p -f 4 build/unsigned.apk build/aligned.apk
+          rm -f assets/AIR-Navig-source.zip
+          (cd build/src && zip -qr -X "$GITHUB_WORKSPACE/assets/AIR-Navig-source.zip" AIR-Navig-source)
 
-      - name: Signer
+      - name: Clé de signature
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_PASSWORD" ]; then echo "::error::Secret KEYSTORE_PASSWORD manquant (Settings > Secrets and variables > Actions)"; exit 1; fi
+          if [ -z "$KEYSTORE_PASSWORD" ]; then echo "::error::Secret KEYSTORE_PASSWORD manquant"; exit 1; fi
+          mkdir -p build
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in base/signing-key.jks.enc -out build/key.jks -pass env:KEYSTORE_PASSWORD
-          "$BT/apksigner" sign --ks build/key.jks --ks-key-alias air --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD --out "build/AIR-Navig-${VNAME}.apk" build/aligned.apk
-          "$BT/apksigner" verify --print-certs "build/AIR-Navig-${VNAME}.apk"
+          echo "KS_FILE=$GITHUB_WORKSPACE/build/key.jks" >> "$GITHUB_ENV"
+
+      - name: Compiler
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: gradle --no-daemon --stacktrace assembleRelease -Paircore="$AIRCORE" -Pvcode="$VCODE" -Pvname="$VNAME"
+
+      - name: Vérifier l'APK
+        run: |
+          APK=$(ls build/outputs/apk/release/*.apk | head -1)
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" verify --print-certs "$APK" | head -3
+          mkdir -p out && cp "$APK" "out/AIR-Navig-${VNAME}.apk"
           rm -f build/key.jks
+          ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
           name: AIR-Navig-${{ env.VNAME }}
-          path: build/AIR-Navig-${{ env.VNAME }}.apk
+          path: out/
 
       - name: Publier dans Releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v${VNAME}" "build/AIR-Navig-${VNAME}.apk" \
-            --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" --latest \
-            --notes "APK compilé automatiquement depuis le commit ${GITHUB_SHA::7}."
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            gh release create "v${VNAME}" "out/AIR-Navig-${VNAME}.apk" --latest \
+              --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER})" \
+              --notes "Moteur AIRCore (Gecko). APK compilé depuis le commit ${GITHUB_SHA::7}."
+          else
+            gh release create "v${VNAME}-gecko" "out/AIR-Navig-${VNAME}.apk" --prerelease --latest=false \
+              --title "AIR Navig 1.0 (build ${GITHUB_RUN_NUMBER}) — essai Gecko" \
+              --notes "Version d'essai sur le moteur AIRCore (Gecko), branche gecko, commit ${GITHUB_SHA::7}."
+          fi
