@@ -7,7 +7,9 @@ def ksPass = System.getenv('KEYSTORE_PASSWORD')
 
 android {
     namespace = 'app.airnavig'
-    compileSdk = 37
+    compileSdk {
+        version = release(37) { minorApiLevel = 2 }
+    }
 
     defaultConfig {
         applicationId = 'app.airnavig'

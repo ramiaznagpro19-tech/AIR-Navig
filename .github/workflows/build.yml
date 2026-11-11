@@ -46,7 +46,7 @@ jobs:
           echo "GeckoView $VER" 
 
       - name: Plateforme Android
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" > /dev/null || true
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.2" > /dev/null || true
 
       - name: Code source embarqué
         run: |
