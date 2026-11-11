@@ -6,6 +6,9 @@ on:
     branches: [gecko]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: test-${{ github.ref }}
   cancel-in-progress: true
@@ -60,3 +63,14 @@ jobs:
         with:
           name: essai-emulateur
           path: out/
+
+      - name: Enregistrer les résultats sur la branche essais
+        if: always()
+        run: |
+          cd out
+          git init -q -b essais
+          git config user.name "AIR Navig CI"
+          git config user.email "ci@airnavig.invalid"
+          git add -A
+          git commit -qm "Essai émulateur ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" essais
