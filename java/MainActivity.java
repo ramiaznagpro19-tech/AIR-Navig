@@ -299,7 +299,6 @@ public class MainActivity extends Activity {
 
     void acceptUiPort(@NonNull WebExtension.Port port) {
         String from = port.sender.url;
-        android.util.Log.i("AIRNavig", "air_ui url=" + from + " base=" + Engine.base);
         if (from == null || !from.startsWith(Engine.base + "chrome.html")) {
             port.disconnect();
             return;
@@ -319,7 +318,6 @@ public class MainActivity extends Activity {
                     return;
                 }
                 String c = m.optString("c", "");
-                android.util.Log.i("AIRNavig", "cmd " + c + " " + m.optString("a", "").length());
                 if (c.isEmpty() || c.length() > 32) return;
                 String a = m.optString("a", "");
                 if (a.length() > MAX_ARG) a = a.substring(0, MAX_ARG);
@@ -712,7 +710,6 @@ public class MainActivity extends Activity {
 
     /** Toute navigation demandée par l'interface passe par ici : liste blanche de schémas, HTTPS en priorité. */
     void navigate(String url) {
-        android.util.Log.i("AIRNavig", "navigate " + url + " content=" + (content != null));
         if (url == null || content == null) return;
         url = url.trim();
         if (url.isEmpty()) return;

@@ -242,7 +242,6 @@ final class Engine {
     private static final class UiFallbackDelegate implements WebExtension.MessageDelegate {
         @Override
         public void onConnect(@NonNull WebExtension.Port port) {
-            Log.i(TAG, "air_ui (extension) url=" + port.sender.url + " session=" + port.sender.session);
             for (MainActivity a : live) {
                 if (a.ownsUi(port.sender.session)) {
                     a.acceptUiPort(port);

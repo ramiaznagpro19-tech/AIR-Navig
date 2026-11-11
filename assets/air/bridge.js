@@ -24,7 +24,6 @@
   function connect() {
     try {
       port = browser.runtime.connectNative('air_ui');
-      console.log('AIR bridge: connecté');
       port.onMessage.addListener(onNative);
       port.onDisconnect.addListener((p) => {
         console.log('AIR bridge: déconnecté', p && p.error && p.error.message);

@@ -8,14 +8,17 @@ adb logcat -c
 adb shell am start -n app.airnavig/.MainActivity
 sleep 35
 adb exec-out screencap -p > out/1-demarrage.png
-sleep 1
-adb shell am start -a android.intent.action.VIEW -d "https://example.org" app.airnavig
-sleep 25
-adb exec-out screencap -p > out/2-site.png
+W=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); SW=${W%x*}; SH=${W#*x}
+# Menu « ••• » (en bas à droite)
+adb shell input tap $((SW*90/100)) $((SH*95/100)); sleep 4
+adb exec-out screencap -p > out/2-menu.png
+adb shell input keyevent KEYCODE_BACK; sleep 3
+adb shell am start -a android.intent.action.VIEW -d "https://www.lemonde.fr" app.airnavig
+sleep 35
+adb exec-out screencap -p > out/3-lemonde.png
 adb shell am start -a android.intent.action.VIEW -d "https://fr.wikipedia.org/wiki/Paris" app.airnavig
-sleep 30
-adb exec-out screencap -p > out/3-wikipedia.png
-adb shell dumpsys activity top | head -60 > out/activite.txt 2>&1
+sleep 25
+adb exec-out screencap -p > out/4-wikipedia.png
 adb logcat -d > out/logcat-complet.txt
-grep -E "GeckoConsole|AIRNavig|GeckoView|Gecko[A-Z][a-zA-Z]*|AndroidRuntime|JavaScript|chromium|Error|Exception" out/logcat-complet.txt | grep -v "^$" | tail -1500 > out/logcat-gecko.txt
+grep -E "GeckoConsole|AIRNavig|AndroidRuntime|FATAL" out/logcat-complet.txt | tail -1500 > out/logcat-gecko.txt
 exit 0
