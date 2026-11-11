@@ -64,6 +64,7 @@ final class Engine {
         // navigation sécurisée. Aucune télémétrie ni rapport de plantage : l'appli n'active
         // ni Glean ni le gestionnaire de plantages de GeckoView.
         GeckoRuntimeSettings settings = new GeckoRuntimeSettings.Builder()
+                .configFilePath(writeConfig(context))
                 .remoteDebuggingEnabled(false)
                 .consoleOutput(false)
                 .aboutConfigEnabled(false)
@@ -87,6 +88,72 @@ final class Engine {
                     waiting.clear();
                     for (Runnable r : list) r.run();
                 }, err -> Log.e(TAG, "Extension AIR introuvable", err));
+    }
+
+    /* ======================= Télémétrie coupée ======================= */
+
+    /**
+     * Réglages imposés au moteur Gecko à chaque démarrage : aucune télémétrie, aucun envoi de
+     * données (Glean/FOG compris), aucune étude, aucun rapport de plantage, aucune connexion
+     * de « vérification » vers les serveurs de Mozilla.
+     */
+    static final String[][] PRIVACY_PREFS = {
+        // Télémétrie Gecko
+        {"toolkit.telemetry.enabled", "false"},
+        {"toolkit.telemetry.unified", "false"},
+        {"toolkit.telemetry.archive.enabled", "false"},
+        {"toolkit.telemetry.server", "'data:,'"},
+        {"toolkit.telemetry.geckoview.streaming", "false"},
+        {"toolkit.telemetry.newProfilePing.enabled", "false"},
+        {"toolkit.telemetry.shutdownPingSender.enabled", "false"},
+        {"toolkit.telemetry.firstShutdownPing.enabled", "false"},
+        {"toolkit.telemetry.updatePing.enabled", "false"},
+        {"toolkit.telemetry.bhrPing.enabled", "false"},
+        {"toolkit.telemetry.dap_enabled", "false"},
+        {"toolkit.telemetry.user_characteristics_ping.opt-out", "true"},
+        {"toolkit.telemetry.coverage.opt-out", "true"},
+        {"toolkit.coverage.opt-out", "true"},
+        {"toolkit.coverage.endpoint.base", "''"},
+        {"dom.security.unexpected_system_load_telemetry_enabled", "false"},
+        {"browser.ping-centre.telemetry", "false"},
+        // Envoi de données (Glean / FOG)
+        {"datareporting.healthreport.uploadEnabled", "false"},
+        {"datareporting.policy.dataSubmissionEnabled", "false"},
+        {"datareporting.usage.uploadEnabled", "false"},
+        // Mesure publicitaire (PPA)
+        {"dom.private-attribution.submission.enabled", "false"},
+        // Études et expériences à distance
+        {"app.normandy.enabled", "false"},
+        {"app.normandy.api_url", "''"},
+        {"app.shield.optoutstudies.enabled", "false"},
+        // Rapports de plantage
+        {"breakpad.reportURL", "''"},
+        {"browser.crashReports.unsubmittedCheck.enabled", "false"},
+        {"browser.crashReports.unsubmittedCheck.autoSubmit2", "false"},
+        // Connexions de vérification vers Mozilla
+        {"network.captive-portal-service.enabled", "false"},
+        {"network.connectivity-service.enabled", "false"},
+        {"captivedetect.canonicalURL", "''"},
+        {"security.certerrors.mitm.priming.enabled", "false"},
+        // Navigation sécurisée gardée, sans envoi d'empreintes de fichiers à Google
+        {"browser.safebrowsing.downloads.remote.enabled", "false"},
+    };
+
+    /** Écrit le fichier de réglages lu par GeckoView au démarrage du moteur. */
+    @Nullable
+    private static String writeConfig(@NonNull Context context) {
+        StringBuilder y = new StringBuilder("# AIR Navig : télémétrie et rapports coupés\n");
+        y.append("env:\n  MOZ_CRASHREPORTER_DISABLE: '1'\n  MOZ_CRASHREPORTER_NO_REPORT: '1'\n");
+        y.append("prefs:\n");
+        for (String[] p : PRIVACY_PREFS) y.append("  ").append(p[0]).append(": ").append(p[1]).append('\n');
+        java.io.File f = new java.io.File(context.getFilesDir(), "air-gecko.yaml");
+        try (java.io.FileOutputStream out = new java.io.FileOutputStream(f)) {
+            out.write(y.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return f.getAbsolutePath();
+        } catch (Exception e) {
+            Log.e(TAG, "Réglages de confidentialité non écrits", e);
+            return null;
+        }
     }
 
     /* ======================= Bloqueur (background.js) ======================= */

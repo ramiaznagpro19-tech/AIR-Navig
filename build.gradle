@@ -55,6 +55,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    packaging {
+        jniLibs {
+            // Moteur compressé dans l'APK (fichier bien plus léger à télécharger).
+            useLegacyPackaging = true
+        }
+    }
+
     lint {
         abortOnError = false
         checkReleaseBuilds = false

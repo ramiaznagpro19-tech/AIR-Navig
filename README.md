@@ -3,8 +3,12 @@
 ## Moteur : GeckoView (Mozilla), plus aucun WebView
 Depuis cette version, AIR Navig n'utilise plus le WebView d'Android. Tout passe par **GeckoView**, le moteur
 Gecko de Firefox pour Android, publié et mis à jour par Mozilla (https://maven.mozilla.org). La compilation
-prend automatiquement la dernière version stable. Aucune télémétrie : l'appli n'active ni Glean ni le
-gestionnaire de plantages de GeckoView.
+prend automatiquement la dernière version stable.
+
+**Télémétrie de Gecko coupée** : à chaque démarrage, AIR Navig impose au moteur un fichier de réglages
+(`Engine.PRIVACY_PREFS`) qui désactive la télémétrie Gecko, l'envoi Glean/FOG, les études Normandy, la mesure
+publicitaire (PPA), les rapports de plantage (aussi coupés par variable d'environnement) et les connexions de
+vérification vers Mozilla. L'appli n'active pas non plus Glean ni le gestionnaire de plantages de GeckoView.
 
 | Avant (WebView) | Maintenant (GeckoView) |
 |---|---|
