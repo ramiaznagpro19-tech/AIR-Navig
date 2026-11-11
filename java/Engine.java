@@ -211,6 +211,7 @@ final class Engine {
     private static final class BackgroundDelegate implements WebExtension.MessageDelegate {
         @Override
         public void onConnect(@NonNull WebExtension.Port port) {
+            Log.i(TAG, "air-bg connecté");
             bgPort = port;
             port.setDelegate(new WebExtension.PortDelegate() {
                 @Override
@@ -241,10 +242,22 @@ final class Engine {
     private static final class UiFallbackDelegate implements WebExtension.MessageDelegate {
         @Override
         public void onConnect(@NonNull WebExtension.Port port) {
+            Log.i(TAG, "air-ui (extension) url=" + port.sender.url + " session=" + port.sender.session);
             for (MainActivity a : live) {
                 if (a.ownsUi(port.sender.session)) {
                     a.acceptUiPort(port);
                     return;
+                }
+            }
+            // Gecko peut ne pas indiquer la session d'une page d'extension : on confie alors le port
+            // à l'activité au premier plan qui attend encore son interface (l'adresse est vérifiée).
+            if (port.sender.session == null) {
+                for (int i = live.size() - 1; i >= 0; i--) {
+                    MainActivity a = live.get(i);
+                    if (a.waitingUi()) {
+                        a.acceptUiPort(port);
+                        return;
+                    }
                 }
             }
             port.disconnect();

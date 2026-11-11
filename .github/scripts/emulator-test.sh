@@ -8,7 +8,7 @@ adb logcat -c
 adb shell am start -n app.airnavig/.MainActivity
 sleep 35
 adb exec-out screencap -p > out/1-demarrage.png
-adb shell input keyevent KEYCODE_BACK; sleep 2
+sleep 1
 adb shell am start -a android.intent.action.VIEW -d "https://example.org" app.airnavig
 sleep 25
 adb exec-out screencap -p > out/2-site.png

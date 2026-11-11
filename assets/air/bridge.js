@@ -24,10 +24,15 @@
   function connect() {
     try {
       port = browser.runtime.connectNative('air-ui');
+      console.log('AIR bridge: connecté');
       port.onMessage.addListener(onNative);
-      port.onDisconnect.addListener(() => { port = null; });
+      port.onDisconnect.addListener((p) => {
+        console.log('AIR bridge: déconnecté', p && p.error && p.error.message);
+        port = null;
+      });
       while (pending.length) port.postMessage(pending.shift());
     } catch (e) {
+      console.log('AIR bridge: échec', e && e.message);
       port = null;
     }
   }
