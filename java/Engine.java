@@ -66,7 +66,8 @@ final class Engine {
         GeckoRuntimeSettings settings = new GeckoRuntimeSettings.Builder()
                 .configFilePath(writeConfig(context))
                 .remoteDebuggingEnabled(false)
-                .consoleOutput(false)
+                // Journal de la console JavaScript seulement dans les versions de test (débogables).
+                .consoleOutput((context.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0)
                 .aboutConfigEnabled(false)
                 .fontInflation(adapt)
                 .build();
