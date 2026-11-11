@@ -16,7 +16,7 @@ let flushTimer = 0;
 
 function connect() {
   try {
-    port = browser.runtime.connectNative('air-bg');
+    port = browser.runtime.connectNative('air_bg');
     port.onMessage.addListener(onNative);
     port.onDisconnect.addListener(() => {
       port = null;

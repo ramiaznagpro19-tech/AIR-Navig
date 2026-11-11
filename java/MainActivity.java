@@ -267,7 +267,7 @@ public class MainActivity extends Activity {
                                                  @NonNull WebExtension.MessageSender sender) {
                 return null;
             }
-        }, "air-ui");
+        }, "air_ui");
         uiSession.open(Engine.runtime);
         chromeView.setSession(uiSession);
 
@@ -299,7 +299,7 @@ public class MainActivity extends Activity {
 
     void acceptUiPort(@NonNull WebExtension.Port port) {
         String from = port.sender.url;
-        android.util.Log.i("AIRNavig", "air-ui url=" + from + " base=" + Engine.base);
+        android.util.Log.i("AIRNavig", "air_ui url=" + from + " base=" + Engine.base);
         if (from == null || !from.startsWith(Engine.base + "chrome.html")) {
             port.disconnect();
             return;

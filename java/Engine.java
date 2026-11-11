@@ -80,10 +80,10 @@ final class Engine {
                     ext = e;
                     base = e.metaData.baseUrl;
                     if (!base.endsWith("/")) base += "/";
-                    e.setMessageDelegate(new BackgroundDelegate(), "air-bg");
+                    e.setMessageDelegate(new BackgroundDelegate(), "air_bg");
                     // Filet de sécurité : selon la version de Gecko, les messages de l'interface
                     // peuvent arriver ici plutôt qu'au niveau de la session.
-                    e.setMessageDelegate(new UiFallbackDelegate(), "air-ui");
+                    e.setMessageDelegate(new UiFallbackDelegate(), "air_ui");
                     starting = false;
                     List<Runnable> list = new ArrayList<>(waiting);
                     waiting.clear();
@@ -211,7 +211,7 @@ final class Engine {
     private static final class BackgroundDelegate implements WebExtension.MessageDelegate {
         @Override
         public void onConnect(@NonNull WebExtension.Port port) {
-            Log.i(TAG, "air-bg connecté");
+            Log.i(TAG, "air_bg connecté");
             bgPort = port;
             port.setDelegate(new WebExtension.PortDelegate() {
                 @Override
@@ -242,7 +242,7 @@ final class Engine {
     private static final class UiFallbackDelegate implements WebExtension.MessageDelegate {
         @Override
         public void onConnect(@NonNull WebExtension.Port port) {
-            Log.i(TAG, "air-ui (extension) url=" + port.sender.url + " session=" + port.sender.session);
+            Log.i(TAG, "air_ui (extension) url=" + port.sender.url + " session=" + port.sender.session);
             for (MainActivity a : live) {
                 if (a.ownsUi(port.sender.session)) {
                     a.acceptUiPort(port);

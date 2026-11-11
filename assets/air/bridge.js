@@ -1,7 +1,7 @@
 /* AIR Navig — pont entre l'interface (cette page, dans Gecko) et l'appli Android.
  *
  * Remplace l'ancien « addJavascriptInterface » du WebView :
- *  - interface → appli : AIR.cmd(c, a) envoie un message natif « air-ui » ;
+ *  - interface → appli : AIR.cmd(c, a) envoie un message natif « air_ui » ;
  *  - appli → interface : l'appli envoie {js: "..."} qui est exécuté ici ;
  *  - les valeurs lues au démarrage (thème système, position, navigation privée…)
  *    arrivent dans l'adresse de la page (?i=...) puis sont tenues à jour.
@@ -23,7 +23,7 @@
 
   function connect() {
     try {
-      port = browser.runtime.connectNative('air-ui');
+      port = browser.runtime.connectNative('air_ui');
       console.log('AIR bridge: connecté');
       port.onMessage.addListener(onNative);
       port.onDisconnect.addListener((p) => {
