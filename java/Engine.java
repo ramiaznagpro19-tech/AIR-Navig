@@ -81,10 +81,23 @@ final class Engine {
         runtime.setAutocompleteStorageDelegate(Passwords.get(context));
         Addons.init(runtime);
 
-        runtime.getWebExtensionController()
-                .ensureBuiltIn(EXT_URI, EXT_ID)
+        // Après une mise à jour de l'appli, l'extension intégrée (interface, bloqueur…) est réinstallée :
+        // GeckoView garderait sinon l'ancienne copie tant que le numéro de version du manifeste ne change pas.
+        // Son identifiant ne change pas, donc ses données (favoris, réglages…) sont conservées.
+        final android.content.SharedPreferences sp = context.getSharedPreferences("air", 0);
+        long vc = 0;
+        try {
+            //noinspection deprecation : getLongVersionCode n'existe qu'à partir d'Android 9
+            vc = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+        } catch (Exception ignored) {
+        }
+        final long appVersion = vc;
+        final boolean upgraded = sp.getLong("ext_vc", -1) != appVersion;
+        (upgraded ? runtime.getWebExtensionController().installBuiltIn(EXT_URI)
+                : runtime.getWebExtensionController().ensureBuiltIn(EXT_URI, EXT_ID))
                 .then(e -> runtime.getWebExtensionController().setAllowedInPrivateBrowsing(e, true))
                 .accept(e -> {
+                    if (upgraded) sp.edit().putLong("ext_vc", appVersion).apply();
                     ext = e;
                     base = e.metaData.baseUrl;
                     if (!base.endsWith("/")) base += "/";

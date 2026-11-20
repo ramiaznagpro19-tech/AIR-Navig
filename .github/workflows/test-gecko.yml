@@ -35,6 +35,9 @@ jobs:
           VER=$(curl -fsSL "$META" | sed -n 's:.*<release>\(.*\)</release>.*:\1:p' | head -1)
           echo "GECKO=org.mozilla.geckoview:geckoview-x86_64:$VER" >> "$GITHUB_ENV"
 
+      - name: Version de l'extension intégrée
+        run: sed -i -E "s/\"version\": \"[0-9.]+\"/\"version\": \"1.0.${GITHUB_RUN_NUMBER}\"/" assets/air/manifest.json && grep '"version"' assets/air/manifest.json
+
       - name: Plateforme Android
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.2" > /dev/null || true
 

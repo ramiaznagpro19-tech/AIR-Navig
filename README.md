@@ -25,6 +25,19 @@ Fichiers principaux : `java/Engine.java` (moteur partagé + extension), `java/Ma
 L'APK pèse plus lourd qu'avant (un vrai moteur de navigateur est embarqué) et ne fonctionne que sur les
 téléphones 64 bits (arm64-v8a), soit la quasi-totalité des téléphones récents.
 
+## Nouveautés de la branche gecko (novembre 2026)
+- **Vrais onglets** : chaque onglet a sa propre session Gecko (la page, le défilement et les formulaires restent quand on change d'onglet). Les onglets peu utilisés s'endorment au-delà de 5 et se rouvrent avec leur historique.
+- **Aperçu réel des onglets** : capture de la page (`GeckoView.capturePixels`), visible dans la liste avant de cliquer. **Appui long puis glisser** pour réordonner.
+- **Liens « nouvel onglet » et fenêtres de connexion** (« Se connecter avec Google… ») ouverts dans un vrai onglet relié à la page d'origine.
+- **Mots de passe** (`java/Passwords.java`, `PasswordsActivity.java`) : Gecko repère les formulaires, AIR Navig propose d'enregistrer et remplit. Stockage chiffré par une clé du coffre matériel Android (AndroidKeyStore, AES-256-GCM). Écran protégé par le verrouillage du téléphone, captures interdites. **Import CSV** (Chrome, Firefox, Bitwarden, Proton Pass…) et export.
+- **Synchronisation chiffrée sans compte** (`java/Sync.java`) : un fichier choisi dans Google Drive, Nextcloud, OneDrive… contient favoris, onglets, historique et mots de passe, chiffrés par ta phrase secrète (PBKDF2-SHA256 210 000 tours + AES-256-GCM). Fusion : la modification la plus récente gagne, suppressions comprises.
+- **Extensions Firefox** (`java/Addons.java`) depuis addons.mozilla.org, avec la liste de ce qu'elles pourront faire avant installation ; activation, navigation privée, options, bouton d'action, suppression.
+- **Mode lecture** : Readability, la bibliothèque du mode lecture de Firefox (`assets/air/readability.js`, Apache 2.0, voir `assets/readability-LICENSE.txt`) ; taille, police, thème clair / sépia / sombre.
+- **Vidéo en incrustation** (Picture-in-Picture) : depuis le menu, ou automatiquement en quittant l'appli pendant une vidéo plein écran.
+- **Traduction des pages sur le téléphone** (Firefox Translations) : rien n'est envoyé à un service en ligne ; proposée ou automatique.
+- **Compatibilité** : HTTPS en priorité géré par Gecko (repli http sans casser les formulaires), correctifs webcompat de Mozilla, authentification HTTP, menu d'appui long (ouvrir dans un nouvel onglet, copier, télécharger l'image), copier-coller dans les pages.
+- **Fichiers locaux et serveurs locaux** : `file:///sdcard/…` (accès aux fichiers demandé quand tu actives « Fichiers locaux »), `localhost:3000`, `192.168.1.20:8080`, `monpc.local` reconnus dans la barre d'adresse ; les sites locaux accèdent au réseau local, les sites publics doivent demander.
+
 ## Version 3.3 — chargement plus rapide
 Le moteur reste le WebView du système (Blink/V8, le même que Chrome). La lenteur venait de la façon dont l'appli l'utilisait :
 - **Traqueurs bloqués envoyés par lots** (toutes les 600 ms) à l'interface, au lieu d'un aller-retour et d'un redessin de la barre *par requête bloquée*. L'interface et les sites partagent le même processus de rendu : chaque redessin ralentissait le site.

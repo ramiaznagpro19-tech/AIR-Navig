@@ -837,7 +837,7 @@ function drawSync(){
 if(!['auto','offer','off'].includes(set.translate))set.translate=(()=>{try{return JSON.parse(new URLSearchParams(location.search).get('i')||'{}').translate||'offer'}catch{return 'offer'}})();
 let TR={on:false,can:false,doc:'',docName:''};
 function onTranslateState(js){try{TR=Object.assign(TR,JSON.parse(js))}catch{}if(TR.on)$('#trBar').hidden=true;if(curSec==='menu')drawMenu()}
-function onTranslateOffer(name){if(set.translate!=='offer')return;$('#trText').textContent='Page en '+name+'. La traduire ?';$('#trBar').hidden=false;requestAnimationFrame(reportHeight);clearTimeout(window.__trT);window.__trT=setTimeout(()=>{$('#trBar').hidden=true;requestAnimationFrame(reportHeight)},15000)}
+function onTranslateOffer(name){if(set.translate!=='offer')return;$('#trText').textContent='Page en '+name+'. La traduire ?';$('#trBar').hidden=false;requestAnimationFrame(reportHeight)}
 $('#trDo').onclick=()=>{$('#trBar').hidden=true;A('translate','do');requestAnimationFrame(reportHeight)};
 $('#trNo').onclick=()=>{$('#trBar').hidden=true;requestAnimationFrame(reportHeight)};
 $('#trNever').onclick=()=>{$('#trBar').hidden=true;A('translate','never');requestAnimationFrame(reportHeight)};

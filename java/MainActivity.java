@@ -172,6 +172,8 @@ public class MainActivity extends Activity {
         boolean offered;
         boolean readerable;
         String pageLang;
+        /** Adresse qui a échoué (la page d'erreur s'affiche sans adresse). */
+        String errUrl;
         WebExtension.Port port;
 
         Tab(String id) {
@@ -1294,9 +1296,68 @@ public class MainActivity extends Activity {
         toJs("onBlockedBatch(" + list.toString() + ")");
     }
 
+    /**
+     * Page d'erreur autonome (data:) : GeckoView affiche la page renvoyée par onLoadError sans son adresse,
+     * donc tout le contenu doit être dans la page elle-même.
+     */
     String errorPage(String kind, String url) {
-        String t = lightUi ? "light" : "dark";
-        return Engine.base + "error.html#k=" + kind + "&t=" + t + "&u=" + Uri.encode(url == null ? "" : url);
+        String[][] T = {
+            {"ssl", "Certificat non valide", "AIR Navig a coupé la connexion",
+                "Le certificat de sécurité de ce site est expiré, mal configuré ou falsifié.|Quelqu’un pourrait essayer d’intercepter ce que tu envoies (mots de passe, cartes…).|Par sécurité, AIR Navig ne permet pas de contourner cette erreur.",
+                "Si c’est ton propre site, corrige son certificat (ex. Let’s Encrypt). Sinon, réessaie plus tard."},
+            {"local", "Rien ne répond ici", "Aucun serveur sur cette adresse locale",
+                "Cette adresse est sur ton téléphone ou ton réseau local (localhost, 192.168.x.x, .local…).|Vérifie que ton serveur est lancé et qu’il écoute sur ce port, et qu’il accepte les connexions du réseau (0.0.0.0).|Sur le téléphone, « localhost » désigne le téléphone lui-même : pour ton ordinateur, utilise son adresse IP sur le Wi-Fi (ex. 192.168.1.20:3000).",
+                "Lance ton serveur puis touche « Réessayer »."},
+            {"offline", "Pas de connexion", "Le téléphone n’est pas connecté à Internet",
+                "Vérifie le Wi-Fi ou les données mobiles.|Le mode avion est peut-être activé.", "La page se rechargera quand tu toucheras « Réessayer »."},
+            {"dns", "Adresse introuvable", "Ce site n’existe pas ou l’adresse est mal écrite",
+                "Vérifie l’orthographe de l’adresse.|Le site a peut-être fermé ou changé d’adresse.", "Tu peux aussi faire une recherche à la place."},
+            {"net", "Page inaccessible", "AIR Navig n’a pas pu joindre ce site",
+                "L’adresse est peut-être mal écrite, ou le site est en panne.|Vérifie aussi ta connexion à Internet (Wi-Fi ou données mobiles).", "Réessaie dans quelques instants."},
+            {"https", "Pas de version sécurisée", "Ce site ne répond pas en HTTPS",
+                "AIR Navig essaie toujours d’abord la connexion chiffrée (HTTPS).|Ce site ne la propose pas ou elle ne fonctionne pas.|En HTTP, tout ce que tu tapes peut être lu ou modifié sur le réseau.",
+                "Ne saisis jamais de mot de passe ni de données bancaires sur une page en HTTP."},
+        };
+        String[] t = T[4];
+        for (String[] x : T) if (x[0].equals(kind)) t = x;
+        String u = url == null ? "" : url;
+        String host = Uri.parse(u).getHost();
+        boolean light = lightUi;
+        StringBuilder li = new StringBuilder();
+        for (String r : t[3].split("\\|")) li.append("<li>").append(html(r)).append("</li>");
+        String retry = u.startsWith("http://") || u.startsWith("https://") || u.startsWith("file:")
+                ? "<a class=\"btn safe\" href=\"" + html(u) + "\">Réessayer</a>" : "";
+        String http = "https".equals(kind) && u.startsWith("http://")
+                ? "<a class=\"btn warn\" href=\"air://insecure?u=" + html(Uri.encode(u)) + "\">Continuer en HTTP (non chiffré)</a>" : "";
+        boolean red = "ssl".equals(kind) || "https".equals(kind);
+        String doc = "<!doctype html><html lang=\"fr\" class=\"" + (light ? "light" : "") + "\"><head><meta charset=\"utf-8\">"
+                + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" + html(t[1]) + "</title><style>"
+                + "*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,Roboto,sans-serif}"
+                + "body{display:flex;flex-direction:column;align-items:center;padding:7vh 20px 30px}"
+                + ".brand{font-weight:800;font-size:13px;letter-spacing:.14em;color:#b9b0ff;margin-bottom:26px}"
+                + ".ic{width:78px;height:78px;border-radius:24px;display:grid;place-items:center;background:" + (red ? "rgba(255,107,122,.15)" : "rgba(139,124,255,.15)") + "}"
+                + ".ic svg{width:42px;height:42px;fill:none;stroke:" + (red ? "#ff6b7a" : "#8b7cff") + ";stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}"
+                + "h1{font-size:23px;margin:18px 0 6px;text-align:center}.host{color:#a9a3d9;font-weight:700;word-break:break-all;text-align:center}"
+                + ".card{width:min(520px,100%);margin-top:20px;padding:14px 16px;border-radius:16px;background:#0d0d10;border:1px solid #26233a}"
+                + ".card b{display:block;margin-bottom:6px}ul{margin:0;padding-left:20px;line-height:1.5;font-size:14px;color:#d8d5ea}li{margin:5px 0}"
+                + ".btns{width:min(520px,100%);display:flex;flex-direction:column;gap:10px;margin-top:22px}"
+                + "a.btn{display:block;text-align:center;padding:15px;border-radius:26px;font-weight:700;text-decoration:none;font-size:15px}"
+                + ".safe{background:#8b7cff;color:#fff}.home{color:#c9c3ff;border:1px solid #3a3560}.warn{color:#ffc2c9;border:1px solid rgba(255,107,122,.5)}"
+                + ".note{width:min(520px,100%);margin-top:14px;color:#9a96b0;font-size:12.5px;line-height:1.45;text-align:center}"
+                + "html.light,html.light body{background:#fff;color:#111}html.light .card{background:#fff;border-color:#e4e1f3}html.light ul{color:#3b3850}"
+                + "html.light .host{color:#5a50c8}html.light .home{color:#5a50c8;border-color:#d6d1f5}html.light .brand{color:#5a50c8}html.light .note{color:#6d6a80}"
+                + "</style></head><body><div class=\"brand\">AIR NAVIG</div>"
+                + "<div class=\"ic\"><svg viewBox=\"0 0 24 24\">" + (red ? "<path d=\"M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z\"/><path d=\"M12 8v5M12 16h.01\"/>"
+                    : "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v6M12 16h.01\"/>") + "</svg></div>"
+                + "<h1>" + html(t[1]) + "</h1><div class=\"host\">" + html(host == null ? u : host) + "</div>"
+                + "<div class=\"card\"><b>" + html(t[2]) + "</b><ul>" + li + "</ul></div>"
+                + "<div class=\"btns\">" + retry + http + "<a class=\"btn home\" href=\"air://home\">Page d’accueil</a></div>"
+                + "<div class=\"note\">" + html(t[4]) + "</div></body></html>";
+        return "data:text/html;charset=utf-8;base64," + Base64.encodeToString(doc.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
+    }
+
+    private static String html(String s) {
+        return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
     /* ======================= Délégués Gecko : sites ======================= */
@@ -1313,6 +1374,7 @@ public class MainActivity extends Activity {
                                      @NonNull List<GeckoSession.PermissionDelegate.ContentPermission> perms,
                                      @NonNull Boolean hasUserGesture) {
             String prev = t.url == null ? "" : t.url;
+            if (t.errUrl != null && ("about:blank".equals(url) || (url != null && url.startsWith("data:")))) url = t.errUrl;
             t.url = url == null ? "" : url;
             if (!stripHash(prev).equals(stripHash(t.url))) {
                 t.translated = false;
@@ -1358,8 +1420,8 @@ public class MainActivity extends Activity {
                     if (isOtherExtension(url)) return GeckoResult.allow();
                     return isInternal(url) && (r.isDirectNavigation || fromInternal) ? GeckoResult.allow() : GeckoResult.deny();
                 case "air":
-                    // Liens internes : uniquement depuis les pages d'AIR Navig, jamais depuis un site.
-                    if (!fromInternal) return GeckoResult.deny();
+                    // Liens internes : uniquement depuis les pages d'AIR Navig (ou sa page d'erreur), jamais depuis un site.
+                    if (!fromInternal && t.errUrl == null) return GeckoResult.deny();
                     if ("insecure".equals(u.getHost())) {
                         String target = u.getQueryParameter("u");
                         if (target != null && target.startsWith("http://")) {
@@ -1384,8 +1446,10 @@ public class MainActivity extends Activity {
                 case "blob":
                     // Fichiers générés par la page elle-même (PDF, aperçus…).
                     return GeckoResult.allow();
-                case "javascript":
                 case "data":
+                    // Seulement la page d'erreur d'AIR Navig (jamais une page data: ouverte par un site).
+                    return t.errUrl != null && url.startsWith("data:text/html;charset=utf-8;base64,") ? GeckoResult.allow() : GeckoResult.deny();
+                case "javascript":
                 case "resource":
                 case "chrome":
                 case "jar":
@@ -1424,8 +1488,12 @@ public class MainActivity extends Activity {
             String kind;
             boolean local = isPrivateHost(Uri.parse(url).getHost());
             if (error.code == WebRequestError.ERROR_SECURITY_BAD_CERT || error.code == WebRequestError.ERROR_SECURITY_SSL) {
-                kind = "ssl";
-                if (t == cur) call("onNotice", "Certificat non valide : connexion bloquée");
+                kind = local ? "local" : "ssl";
+                if (t == cur && !local) call("onNotice", "Certificat non valide : connexion bloquée");
+            } else if (error.code == WebRequestError.ERROR_OFFLINE) {
+                kind = "offline";
+            } else if (error.code == WebRequestError.ERROR_UNKNOWN_HOST && !local) {
+                kind = "dns";
             } else if (local) {
                 kind = "local";
                 // Un serveur local en http:// essayé d'abord en https:// : on affiche l'adresse http.
@@ -1433,6 +1501,7 @@ public class MainActivity extends Activity {
             } else {
                 kind = "net";
             }
+            t.errUrl = uri == null ? "" : uri;
             return GeckoResult.fromValue(errorPage(kind, url));
         }
     }
@@ -1459,6 +1528,7 @@ public class MainActivity extends Activity {
         @Override
         public void onPageStart(@NonNull GeckoSession s, @NonNull String url) {
             t.loading = true;
+            if (!url.startsWith("data:") && !"about:blank".equals(url)) t.errUrl = null;
             t.url = url;
             if (t != cur) return;
             loading = true;
