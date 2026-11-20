@@ -272,7 +272,8 @@ let noticeT; function notice(msg){if(set.pos==='right'){A('toast',msg);return}co
 
 /* ===== Appels du code Android ===== */
 function onNav(url,back,fwd,loading){
-  if(url!==st.url&&loading){st.title='';READING=false;READABLE=false;try{if(!$('#trBar').hidden){$('#trBar').hidden=true;requestAnimationFrame(reportHeight)}}catch(e){}}
+  if(loading){READING=false;READABLE=false}
+  if(url!==st.url&&loading){st.title='';try{if(!$('#trBar').hidden){$('#trBar').hidden=true;requestAnimationFrame(reportHeight)}}catch(e){}}
   st.back=back; st.fwd=fwd; st.loading=loading;
   const h=(isInternal(url)||isLocalFile(url))?'':host(url);
   if(loading&&!isHome(url)){

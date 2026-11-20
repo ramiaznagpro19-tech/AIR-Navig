@@ -171,6 +171,7 @@ public class MainActivity extends Activity {
         boolean translated;
         boolean offered;
         boolean readerable;
+        String pageLang;
         WebExtension.Port port;
 
         Tab(String id) {
@@ -1316,6 +1317,8 @@ public class MainActivity extends Activity {
             if (!stripHash(prev).equals(stripHash(t.url))) {
                 t.translated = false;
                 t.offered = false;
+                t.pageLang = null;
+                t.tstate = null;
             }
             if (t == cur) {
                 curUrl = t.url;
@@ -1419,9 +1422,14 @@ public class MainActivity extends Activity {
         public GeckoResult<String> onLoadError(@NonNull GeckoSession s, @Nullable String uri, @NonNull WebRequestError error) {
             String url = uri == null ? "" : uri;
             String kind;
-            if (error.category == WebRequestError.ERROR_CATEGORY_SECURITY) {
+            boolean local = isPrivateHost(Uri.parse(url).getHost());
+            if (error.code == WebRequestError.ERROR_SECURITY_BAD_CERT || error.code == WebRequestError.ERROR_SECURITY_SSL) {
                 kind = "ssl";
                 if (t == cur) call("onNotice", "Certificat non valide : connexion bloquée");
+            } else if (local) {
+                kind = "local";
+                // Un serveur local en http:// essayé d'abord en https:// : on affiche l'adresse http.
+                if (url.startsWith("https://")) url = "http://" + url.substring(8);
             } else {
                 kind = "net";
             }
@@ -1651,6 +1659,11 @@ public class MainActivity extends Activity {
                 public void onPortMessage(@NonNull Object message, @NonNull WebExtension.Port p) {
                     if (p != t.port || !(message instanceof JSONObject)) return;
                     JSONObject m = (JSONObject) message;
+                    if (m.has("lang")) {
+                        String l = m.optString("lang", "").trim();
+                        t.pageLang = l.matches("[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8})*") ? l.replace('_', '-') : null;
+                        maybeOffer(t);
+                    }
                     if (m.has("readerable")) {
                         t.readerable = m.optBoolean("readerable");
                         if (t == cur) toJs("window.onReaderable&&onReaderable(" + t.readerable + ")");
@@ -1835,23 +1848,29 @@ public class MainActivity extends Activity {
         public void onTranslationStateChange(@NonNull GeckoSession s,
                                              @Nullable TranslationsController.SessionTranslation.TranslationState st) {
             t.tstate = st;
+            Log.i(TAG, "traduction : " + st);
             if (st != null && st.requestedTranslationPair != null) t.translated = true;
             if (t == cur) pushTranslateState(t);
             // Gecko ne propose pas toujours lui-même : on décide à partir de la langue détectée.
-            if (!t.offered && !t.translated && canTranslate(t)) {
-                t.offered = true;
-                if (t == cur) {
-                    if ("auto".equals(translateMode)) translateNow(t, false);
-                    else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)));
-                }
-            }
+            maybeOffer(t);
         }
     }
 
+    /** Langue de la page : détection de Gecko, sinon attribut lang de la page. */
     @Nullable
     private static String docLang(Tab t) {
-        if (t == null || t.tstate == null || t.tstate.detectedLanguages == null) return null;
-        return t.tstate.detectedLanguages.docLangTag;
+        if (t == null) return null;
+        String d = t.tstate == null || t.tstate.detectedLanguages == null ? null : t.tstate.detectedLanguages.docLangTag;
+        return d != null && !d.isEmpty() ? d : t.pageLang;
+    }
+
+    /** Propose (ou fait) la traduction une seule fois par page, seulement pour les sites web. */
+    private void maybeOffer(Tab t) {
+        if (t == null || t.offered || t.translated || !canTranslate(t)) return;
+        t.offered = true;
+        if (t != cur) return;
+        if ("auto".equals(translateMode)) translateNow(t, false);
+        else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)));
     }
 
     private static String userLang(Tab t) {
@@ -1867,10 +1886,12 @@ public class MainActivity extends Activity {
     }
 
     private static boolean canTranslate(Tab t) {
+        if (t == null || t.url == null || !(t.url.startsWith("http://") || t.url.startsWith("https://"))) return false;
         String d = docLang(t);
-        return t != null && t.tstate != null && t.tstate.detectedLanguages != null
-                && Boolean.TRUE.equals(t.tstate.detectedLanguages.isDocLangTagSupported)
-                && d != null && !d.isEmpty() && !baseLang(d).equalsIgnoreCase(baseLang(userLang(t)));
+        boolean unsupported = t.tstate != null && t.tstate.detectedLanguages != null
+                && Boolean.FALSE.equals(t.tstate.detectedLanguages.isDocLangTagSupported)
+                && t.tstate.detectedLanguages.docLangTag != null;
+        return !unsupported && d != null && !d.isEmpty() && !baseLang(d).equalsIgnoreCase(baseLang(userLang(t)));
     }
 
     private static String baseLang(String tag) {
@@ -1886,9 +1907,7 @@ public class MainActivity extends Activity {
             j.put("docName", langName(d));
             j.put("user", userLang(t));
             j.put("on", t.translated);
-            boolean supported = t.tstate != null && t.tstate.detectedLanguages != null
-                    && Boolean.TRUE.equals(t.tstate.detectedLanguages.isDocLangTagSupported);
-            j.put("can", supported && canTranslate(t));
+            j.put("can", canTranslate(t));
             j.put("err", t.tstate == null || t.tstate.error == null ? "" : t.tstate.error);
             call("onTranslateState", j.toString());
         } catch (Exception ignored) {
