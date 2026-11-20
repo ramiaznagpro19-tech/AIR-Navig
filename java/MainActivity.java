@@ -1,14 +1,19 @@
 package app.airnavig;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
+import android.app.PictureInPictureParams;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.UriPermission;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +21,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.util.Base64;
+import android.util.Log;
+import android.util.Rational;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -24,12 +33,18 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,12 +53,16 @@ import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mozilla.geckoview.AllowOrDeny;
+import org.mozilla.geckoview.BasicSelectionActionDelegate;
 import org.mozilla.geckoview.GeckoResult;
 import org.mozilla.geckoview.GeckoRuntimeSettings;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoSessionSettings;
 import org.mozilla.geckoview.GeckoView;
+import org.mozilla.geckoview.MediaSession;
+import org.mozilla.geckoview.PictureInPictureController;
 import org.mozilla.geckoview.StorageController;
+import org.mozilla.geckoview.TranslationsController;
 import org.mozilla.geckoview.WebExtension;
 import org.mozilla.geckoview.WebRequestError;
 import org.mozilla.geckoview.WebResponse;
@@ -52,8 +71,9 @@ import org.mozilla.geckoview.WebResponse;
  * AIR Navig — navigateur de la marque AIR, créé par Rami, un peu passionné de développement.
  *
  * <p>Moteur : GeckoView, le moteur Gecko de Firefox pour Android (Mozilla). Plus aucun WebView : l'interface (chrome.html)
- * et les sites tournent tous les deux dans Gecko, dans deux sessions séparées. L'interface
- * parle à l'appli par la messagerie native de l'extension intégrée « air@airnavig.app ».
+ * et les sites tournent dans Gecko. Chaque onglet a sa propre session Gecko (page, défilement et
+ * formulaires gardés quand on change d'onglet), avec un aperçu réel capturé à l'écran.
+ * L'interface parle à l'appli par la messagerie native de l'extension intégrée « air@airnavig.app ».
  *
  * <p>Sécurité conservée : pont réservé à la page d'interface, HTTPS en priorité, aucune erreur
  * de certificat contournable, autorisations demandées site par site, accès fichiers coupés par
@@ -62,6 +82,7 @@ import org.mozilla.geckoview.WebResponse;
 public class MainActivity extends Activity {
     static final String CREATOR = "Rami";
     static final String BRAND = "AIR";
+    private static final String TAG = "AIRNavig";
 
     private static final int BG = 0xFF000000;
     private static final int BG_LIGHT = 0xFFFFFFFF;
@@ -72,12 +93,17 @@ public class MainActivity extends Activity {
     private static final int REQ_ANDROID_PERMS = 7;
     static final int REQ_FILE = 9;
     private static final int REQ_OPEN = 11;
+    private static final int REQ_STORAGE = 12;
     private static final int MAX_ARG = 256 * 1024;
-    private static final Pattern PRIVATE_HOST = Pattern.compile("^(localhost|127\\.\\d+\\.\\d+\\.\\d+|10\\.\\d+\\.\\d+\\.\\d+|192\\.168\\.\\d+\\.\\d+|172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+|\\[::1\\]|.+\\.local)$");
+    private static final int MAX_SYNC_ARG = 16 * 1024 * 1024;
+    /** Nombre d'onglets gardés « vivants » en mémoire ; les autres sont rechargés à la demande. */
+    private static final int MAX_LIVE = 5;
+    static final Pattern PRIVATE_HOST = Pattern.compile("^(localhost|.+\\.localhost|127\\.\\d+\\.\\d+\\.\\d+|0\\.0\\.0\\.0|10\\.\\d+\\.\\d+\\.\\d+|192\\.168\\.\\d+\\.\\d+|172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+|169\\.254\\.\\d+\\.\\d+|\\[?::1\\]?|\\[?f[cd][0-9a-f]{2}:.*|.+\\.local|.+\\.lan|.+\\.home\\.arpa|.+\\.internal)$");
 
     private GeckoView chromeView;
     private GeckoView contentView;
     private GeckoSession uiSession;
+    /** Session de l'onglet affiché (raccourci vers cur.s). */
     private GeckoSession content;
     private WebExtension.Port uiPort;
     private boolean uiReady;
@@ -91,7 +117,7 @@ public class MainActivity extends Activity {
     private Prompts prompts;
     private final Handler ui = new Handler(Looper.getMainLooper());
 
-    /* État de la page affichée. */
+    /* État de la page affichée (copie de l'onglet courant). */
     private String curUrl = "";
     private boolean canBack;
     private boolean canFwd;
@@ -112,9 +138,8 @@ public class MainActivity extends Activity {
 
     /* Décisions par site (origine + type d'accès). En navigation privée : en mémoire seulement. */
     private final Map<String, Boolean> siteDecisions = Collections.synchronizedMap(new HashMap<String, Boolean>());
-    /* HTTPS en priorité : hôtes pour lesquels l'utilisateur a accepté le HTTP non chiffré. */
+    /* Hôtes pour lesquels l'utilisateur a accepté le HTTP non chiffré. */
     private final Set<String> httpAllowed = Collections.synchronizedSet(new HashSet<String>());
-    private final Set<String> upgradedHosts = Collections.synchronizedSet(new HashSet<String>());
     private final Set<String> grantedContent = Collections.synchronizedSet(new HashSet<String>());
 
     private boolean desktop = false;
@@ -124,6 +149,42 @@ public class MainActivity extends Activity {
     private int pos = POS_BOTTOM;
     private int barSize = 120;
     private boolean barFull = false;
+
+    /* Traduction : off, offer (proposer) ou auto. */
+    private String translateMode = "offer";
+
+    /* ======================= Onglets ======================= */
+
+    /** Un onglet = une session Gecko (fermée quand l'onglet dort, rouverte avec son historique). */
+    static final class Tab {
+        final String id;
+        GeckoSession s;
+        String url = "";
+        String title = "";
+        boolean canBack, canFwd, loading;
+        String state;
+        String opener;
+        long used;
+        boolean playing;
+        long vw = 16, vh = 9;
+        TranslationsController.SessionTranslation.TranslationState tstate;
+        boolean translated;
+        boolean offered;
+
+        Tab(String id) {
+            this.id = id;
+        }
+    }
+
+    private final LinkedHashMap<String, Tab> tabs = new LinkedHashMap<>();
+    private Tab cur;
+    private final Map<String, String> thumbs = new HashMap<>();
+    private final Map<String, String> savedStates = new HashMap<>();
+    private int tabSeq;
+
+    private String newId() {
+        return "n" + Long.toString(System.currentTimeMillis(), 36) + (tabSeq++);
+    }
 
     /* ======================= Thème ======================= */
 
@@ -167,7 +228,12 @@ public class MainActivity extends Activity {
     @Override
     public void onConfigurationChanged(@NonNull Configuration configuration) {
         super.onConfigurationChanged(configuration);
+        if (Engine.runtime != null) Engine.runtime.configurationChanged(configuration);
         toJs("window.onSysDark&&onSysDark(" + systemDark() + ")");
+    }
+
+    Prompts prompts() {
+        return prompts;
     }
 
     /* ======================= Création ======================= */
@@ -187,6 +253,7 @@ public class MainActivity extends Activity {
         pos = prefs.getInt("pos", POS_BOTTOM);
         barSize = pos == POS_RIGHT ? 64 : pos == POS_TOP ? 60 : 120;
         adapt = prefs.getBoolean("adapt", true);
+        translateMode = prefs.getString("translate", "offer");
 
         root = new FrameLayout(this);
         root.setBackgroundColor(BG);
@@ -201,11 +268,12 @@ public class MainActivity extends Activity {
 
         Engine.live.add(this);
         Engine.front = this;
+        Passwords.privateFront = incognito();
         final String initial = incomingUrl(getIntent());
+        if (!incognito()) loadTabStore();
         Engine.start(this, () -> {
             if (isFinishing() || isDestroyed()) return;
             applyLook();
-            createContent();
             createUi(initial);
         });
 
@@ -255,6 +323,7 @@ public class MainActivity extends Activity {
             }
         });
         uiSession.setPromptDelegate(prompts);
+        uiSession.setSelectionActionDelegate(new BasicSelectionActionDelegate(this));
         uiSession.getWebExtensionController().setMessageDelegate(Engine.ext, new WebExtension.MessageDelegate() {
             @Override
             public void onConnect(@NonNull WebExtension.Port port) {
@@ -281,6 +350,8 @@ public class MainActivity extends Activity {
                 if (s != null && s.length() <= MAX_ARG) init.put("initSettings", s);
             }
             init.put("about", about());
+            init.put("sync", Sync.status(this));
+            init.put("translate", translateMode);
         } catch (Exception ignored) {
         }
         uiSession.loadUri(Engine.base + "chrome.html?i=" + Uri.encode(init.toString())
@@ -310,7 +381,7 @@ public class MainActivity extends Activity {
                 if (p != uiPort || !(message instanceof JSONObject)) return;
                 JSONObject m = (JSONObject) message;
                 if (m.has("ready")) {
-                    android.util.Log.i("AIRNavig", "interface prête, " + jsQueue.size() + " messages en attente");
+                    Log.i(TAG, "interface prête, " + jsQueue.size() + " messages en attente");
                     uiReady = true;
                     List<String> q = new ArrayList<>(jsQueue);
                     jsQueue.clear();
@@ -320,7 +391,8 @@ public class MainActivity extends Activity {
                 String c = m.optString("c", "");
                 if (c.isEmpty() || c.length() > 32) return;
                 String a = m.optString("a", "");
-                if (a.length() > MAX_ARG) a = a.substring(0, MAX_ARG);
+                int max = "syncput".equals(c) ? MAX_SYNC_ARG : MAX_ARG;
+                if (a.length() > max) a = a.substring(0, max);
                 runCmd(c, a);
             }
 
@@ -334,21 +406,298 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** Session des sites. Navigation privée : rien n'est gardé sur le disque. */
-    private void createContent() {
-        content = new GeckoSession(new GeckoSessionSettings.Builder()
+    /* ======================= Sessions des onglets ======================= */
+
+    private GeckoSessionSettings tabSettings() {
+        return new GeckoSessionSettings.Builder()
                 .usePrivateMode(incognito())
                 .userAgentMode(desktop ? GeckoSessionSettings.USER_AGENT_MODE_DESKTOP : GeckoSessionSettings.USER_AGENT_MODE_MOBILE)
                 .viewportMode(desktop ? GeckoSessionSettings.VIEWPORT_MODE_DESKTOP : GeckoSessionSettings.VIEWPORT_MODE_MOBILE)
                 .suspendMediaWhenInactive(true)
-                .build());
-        content.setNavigationDelegate(new Nav());
-        content.setProgressDelegate(new Progress());
-        content.setContentDelegate(new Content());
-        content.setPermissionDelegate(new Perms(this));
-        content.setPromptDelegate(prompts);
-        content.open(Engine.runtime);
-        contentView.setSession(content);
+                .build();
+    }
+
+    /** Nouvelle session (pas encore ouverte) reliée à l'onglet {@code t}. */
+    private GeckoSession newSession(Tab t) {
+        GeckoSession s = new GeckoSession(tabSettings());
+        s.setNavigationDelegate(new Nav(t));
+        s.setProgressDelegate(new Progress(t));
+        s.setContentDelegate(new Content(t));
+        s.setPermissionDelegate(new Perms(this));
+        s.setPromptDelegate(prompts);
+        s.setSelectionActionDelegate(new BasicSelectionActionDelegate(this));
+        s.setMediaSessionDelegate(new Media(t));
+        s.setPictureInPictureDelegate(new Pip(t));
+        s.setTranslationsSessionDelegate(new Translate(t));
+        return s;
+    }
+
+    /** Rouvre la session d'un onglet endormi (avec son historique si on l'a). Renvoie true s'il faut charger son adresse. */
+    private boolean wake(Tab t) {
+        if (t.s != null) return false;
+        t.s = newSession(t);
+        t.s.open(Engine.runtime);
+        String st = t.state != null ? t.state : savedStates.get(t.id);
+        if (st != null) {
+            try {
+                t.s.restoreState(GeckoSession.SessionState.fromString(st));
+                return false;
+            } catch (Throwable e) {
+                Log.w(TAG, "État d'onglet illisible", e);
+            }
+        }
+        return true;
+    }
+
+    /** Endort les onglets les moins récents au-delà de MAX_LIVE. */
+    private void trimLive() {
+        int live = 0;
+        for (Tab t : tabs.values()) if (t.s != null) live++;
+        while (live > MAX_LIVE) {
+            Tab old = null;
+            for (Tab t : tabs.values()) {
+                if (t.s == null || t == cur || t.playing) continue;
+                if (old == null || t.used < old.used) old = t;
+            }
+            if (old == null) break;
+            try {
+                old.s.close();
+            } catch (Throwable ignored) {
+            }
+            old.s = null;
+            live--;
+        }
+    }
+
+    /** Affiche l'onglet {@code id} (le crée s'il n'existe pas) ; charge {@code url} si l'onglet est neuf. */
+    void switchTab(String id, String url) {
+        if (Engine.runtime == null || id == null || id.isEmpty()) return;
+        Tab t = tabs.get(id);
+        if (t == null) {
+            t = new Tab(id);
+            tabs.put(id, t);
+        }
+        if (t == cur && t.s != null) {
+            if (url != null && !url.isEmpty() && (t.url == null || t.url.isEmpty()) && t.state == null) navigate(url);
+            return;
+        }
+        Tab prev = cur;
+        if (prev != null && prev.s != null) {
+            captureThumb(prev);
+            prev.s.setActive(false);
+            Engine.runtime.getWebExtensionController().setTabActive(prev.s, false);
+        }
+        boolean load = wake(t);
+        cur = t;
+        t.used = System.currentTimeMillis();
+        try {
+            contentView.releaseSession();
+        } catch (Throwable ignored) {
+        }
+        contentView.setSession(t.s);
+        content = t.s;
+        t.s.setActive(true);
+        Engine.runtime.getWebExtensionController().setTabActive(t.s, true);
+        curUrl = t.url == null ? "" : t.url;
+        canBack = t.canBack;
+        canFwd = t.canFwd;
+        loading = t.loading;
+        if (load && url != null && !url.isEmpty()) navigate(url);
+        else onNav();
+        call("onTitle", t.title == null ? "" : t.title);
+        pushTranslateState(t);
+        trimLive();
+    }
+
+    private void closeTab(String id) {
+        Tab t = tabs.remove(id);
+        if (t == null) return;
+        if (t == cur) {
+            try {
+                contentView.releaseSession();
+            } catch (Throwable ignored) {
+            }
+            cur = null;
+            content = null;
+        }
+        if (t.s != null) {
+            try {
+                t.s.close();
+            } catch (Throwable ignored) {
+            }
+        }
+        thumbs.remove(id);
+        savedStates.remove(id);
+        if (!incognito()) {
+            //noinspection ResultOfMethodCallIgnored
+            new File(thumbDir(), id + ".jpg").delete();
+            saveTabStoreLater();
+        }
+    }
+
+    /** Session pour un nouvel onglet ouvert par une page ou une extension (Gecko l'ouvre lui-même). */
+    GeckoSession newTabSession(@Nullable String url, boolean active) {
+        final Tab t = new Tab(newId());
+        t.opener = cur == null ? null : cur.id;
+        t.url = url == null ? "" : url;
+        t.s = newSession(t);
+        tabs.put(t.id, t);
+        final GeckoSession s = t.s;
+        final int[] tries = {0};
+        final Runnable[] show = new Runnable[1];
+        show[0] = () -> {
+            if (!s.isOpen()) {
+                if (tries[0]++ < 100) ui.postDelayed(show[0], 30);
+                return;
+            }
+            try {
+                call("onNewTab", new JSONObject().put("id", t.id).put("url", t.url).put("opener", t.opener == null ? "" : t.opener).put("active", active).toString());
+            } catch (Exception ignored) {
+            }
+            if (active) switchTab(t.id, null);
+        };
+        ui.post(show[0]);
+        return s;
+    }
+
+    /** Ouvre une adresse dans un nouvel onglet (géré par l'interface). */
+    void openInNewTab(String url) {
+        call("openUrl", url);
+    }
+
+    /* ======================= Aperçus des onglets ======================= */
+
+    private File thumbDir() {
+        File d = new File(getCacheDir(), "thumbs");
+        //noinspection ResultOfMethodCallIgnored
+        d.mkdirs();
+        return d;
+    }
+
+    /** Capture l'écran de l'onglet affiché (aperçu réel pour la liste des onglets). */
+    private GeckoResult<Void> captureThumb(final Tab t) {
+        final GeckoResult<Void> done = new GeckoResult<>();
+        if (t == null || t != cur || t.s == null || contentView.getVisibility() != View.VISIBLE
+                || contentView.getWidth() == 0 || contentView.getHeight() == 0 || fullscreen) {
+            done.complete(null);
+            return done;
+        }
+        try {
+            contentView.capturePixels().accept(bmp -> {
+                if (bmp != null) storeThumb(t.id, bmp);
+                done.complete(null);
+            }, e -> done.complete(null));
+        } catch (Throwable e) {
+            done.complete(null);
+        }
+        return done;
+    }
+
+    private void storeThumb(final String id, Bitmap bmp) {
+        try {
+            int w = 360;
+            int h = Math.max(1, Math.round(bmp.getHeight() * (w / (float) bmp.getWidth())));
+            Bitmap small = Bitmap.createScaledBitmap(bmp, w, h, true);
+            int ch = Math.min(h, Math.round(w * 1.4f));
+            Bitmap crop = ch < h ? Bitmap.createBitmap(small, 0, 0, w, ch) : small;
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            crop.compress(Bitmap.CompressFormat.JPEG, 62, bo);
+            final byte[] jpg = bo.toByteArray();
+            String data = "data:image/jpeg;base64," + Base64.encodeToString(jpg, Base64.NO_WRAP);
+            thumbs.put(id, data);
+            call("onThumb", id, data);
+            if (!incognito()) {
+                new Thread(() -> {
+                    try (FileOutputStream out = new FileOutputStream(new File(thumbDir(), id + ".jpg"))) {
+                        out.write(jpg);
+                    } catch (Exception ignored) {
+                    }
+                }).start();
+            }
+        } catch (Throwable e) {
+            Log.w(TAG, "Aperçu d'onglet", e);
+        }
+    }
+
+    private final Runnable thumbLater = () -> captureThumb(cur);
+
+    /* ======================= Mémoire des onglets ======================= */
+
+    private File tabStoreFile() {
+        return new File(getFilesDir(), "tabstates.json");
+    }
+
+    private void loadTabStore() {
+        try {
+            File f = tabStoreFile();
+            if (f.exists()) {
+                byte[] b = new byte[(int) f.length()];
+                try (InputStream in = new java.io.FileInputStream(f)) {
+                    int off = 0, n;
+                    while (off < b.length && (n = in.read(b, off, b.length - off)) > 0) off += n;
+                }
+                JSONObject j = new JSONObject(new String(b, StandardCharsets.UTF_8));
+                for (Iterator<String> it = j.keys(); it.hasNext(); ) {
+                    String k = it.next();
+                    savedStates.put(k, j.getString(k));
+                }
+            }
+            File[] list = thumbDir().listFiles();
+            if (list != null) for (File t : list) {
+                String n = t.getName();
+                if (!n.endsWith(".jpg") || t.length() > 400_000) continue;
+                byte[] b = new byte[(int) t.length()];
+                try (InputStream in = new java.io.FileInputStream(t)) {
+                    int off = 0, r;
+                    while (off < b.length && (r = in.read(b, off, b.length - off)) > 0) off += r;
+                }
+                thumbs.put(n.substring(0, n.length() - 4), "data:image/jpeg;base64," + Base64.encodeToString(b, Base64.NO_WRAP));
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Onglets enregistrés illisibles", e);
+        }
+    }
+
+    private final Runnable saveTabStore = () -> {
+        if (incognito()) return;
+        final JSONObject j = new JSONObject();
+        try {
+            for (Map.Entry<String, String> e : savedStates.entrySet()) j.put(e.getKey(), e.getValue());
+            for (Tab t : tabs.values()) if (t.state != null) j.put(t.id, t.state);
+        } catch (Exception ignored) {
+        }
+        new Thread(() -> {
+            try {
+                File tmp = new File(getFilesDir(), "tabstates.json.tmp");
+                try (FileOutputStream out = new FileOutputStream(tmp)) {
+                    out.write(j.toString().getBytes(StandardCharsets.UTF_8));
+                }
+                //noinspection ResultOfMethodCallIgnored
+                tmp.renameTo(tabStoreFile());
+            } catch (Exception ignored) {
+            }
+        }).start();
+    };
+
+    private void saveTabStoreLater() {
+        ui.removeCallbacks(saveTabStore);
+        ui.postDelayed(saveTabStore, 1500);
+    }
+
+    /** L'interface donne la liste des onglets existants : on oublie les autres. */
+    private void keepTabs(JSONArray ids) {
+        Set<String> keep = new HashSet<>();
+        for (int i = 0; i < ids.length(); i++) keep.add(ids.optString(i));
+        for (String k : new ArrayList<>(savedStates.keySet())) if (!keep.contains(k)) savedStates.remove(k);
+        for (String k : new ArrayList<>(thumbs.keySet())) {
+            if (!keep.contains(k)) {
+                thumbs.remove(k);
+                //noinspection ResultOfMethodCallIgnored
+                new File(thumbDir(), k + ".jpg").delete();
+            }
+        }
+        for (String k : new ArrayList<>(tabs.keySet())) if (!keep.contains(k) && tabs.get(k) != cur) closeTab(k);
+        saveTabStoreLater();
     }
 
     private void recreateSafely() {
@@ -399,7 +748,7 @@ public class MainActivity extends Activity {
     private void loadSiteDecisions() {
         try {
             JSONObject j = new JSONObject(prefs.getString("sitePerms", "{}"));
-            java.util.Iterator<String> it = j.keys();
+            Iterator<String> it = j.keys();
             while (it.hasNext()) {
                 String k = it.next();
                 siteDecisions.put(k, j.getBoolean(k));
@@ -437,15 +786,15 @@ public class MainActivity extends Activity {
         col.setOrientation(side ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         LinearLayout.LayoutParams cp = side ? new LinearLayout.LayoutParams(0, -1, 1f) : new LinearLayout.LayoutParams(-1, 0, 1f);
         LinearLayout.LayoutParams bp;
-        if (barFull) {
+        if (barFull && !fullscreen) {
             bp = new LinearLayout.LayoutParams(-1, -1);
             contentView.setVisibility(View.GONE);
         } else {
             bp = side ? new LinearLayout.LayoutParams(px(barSize), -1) : new LinearLayout.LayoutParams(-1, px(barSize));
             contentView.setVisibility(View.VISIBLE);
         }
-        if (fullscreen) chromeView.setVisibility(View.GONE);
-        else chromeView.setVisibility(View.VISIBLE);
+        boolean pip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode();
+        chromeView.setVisibility(fullscreen || pip ? View.GONE : View.VISIBLE);
         if (pos == POS_TOP) {
             col.addView(chromeView, bp);
             col.addView(contentView, cp);
@@ -466,12 +815,21 @@ public class MainActivity extends Activity {
 
     private void setBar(int i) {
         if (i <= 0) {
+            if (barFull) return;
             barFull = true;
-            contentView.setVisibility(View.GONE);
-            ViewGroup.LayoutParams lp = chromeView.getLayoutParams();
-            lp.width = -1;
-            lp.height = -1;
-            chromeView.setLayoutParams(lp);
+            // Aperçu de la page juste avant de la cacher (liste des onglets, menu…).
+            final boolean[] hidden = {false};
+            final Runnable hide = () -> {
+                if (hidden[0] || !barFull) return;
+                hidden[0] = true;
+                contentView.setVisibility(View.GONE);
+                ViewGroup.LayoutParams lp = chromeView.getLayoutParams();
+                lp.width = -1;
+                lp.height = -1;
+                chromeView.setLayoutParams(lp);
+            };
+            captureThumb(cur).accept(v -> hide.run(), e -> hide.run());
+            ui.postDelayed(hide, 250);
             return;
         }
         barFull = false;
@@ -517,6 +875,7 @@ public class MainActivity extends Activity {
             j.put("webview", "GeckoView " + gecko + " (Mozilla)");
             j.put("engine", "GeckoView");
             j.put("gecko", gecko);
+            j.put("passwords", Passwords.get(this).count());
             return j;
         } catch (Exception e) {
             return new JSONObject();
@@ -540,6 +899,9 @@ public class MainActivity extends Activity {
                     break;
                 case "go":
                     navigate(a);
+                    break;
+                case "tab":
+                    tabCmd(new JSONObject(a));
                     break;
                 case "back":
                     if (canBack && content != null) content.goBack();
@@ -597,10 +959,13 @@ public class MainActivity extends Activity {
                     Engine.setRules(rulesCsv);
                     break;
                 }
-                case "perms":
+                case "perms": {
+                    boolean wasLocal = allowLocal;
                     loadPermissions(a);
                     savePref("perms2", a);
+                    if (allowLocal && !wasLocal) requestFileAccess();
                     break;
+                }
                 case "forgetperms":
                     siteDecisions.clear();
                     saveSiteDecisions();
@@ -617,11 +982,14 @@ public class MainActivity extends Activity {
                 }
                 case "desktop": {
                     boolean on = !a.isEmpty();
-                    if (on != desktop && content != null) {
+                    if (on != desktop) {
                         desktop = on;
-                        content.getSettings().setUserAgentMode(on ? GeckoSessionSettings.USER_AGENT_MODE_DESKTOP : GeckoSessionSettings.USER_AGENT_MODE_MOBILE);
-                        content.getSettings().setViewportMode(on ? GeckoSessionSettings.VIEWPORT_MODE_DESKTOP : GeckoSessionSettings.VIEWPORT_MODE_MOBILE);
-                        content.reload();
+                        for (Tab t : tabs.values()) {
+                            if (t.s == null) continue;
+                            t.s.getSettings().setUserAgentMode(on ? GeckoSessionSettings.USER_AGENT_MODE_DESKTOP : GeckoSessionSettings.USER_AGENT_MODE_MOBILE);
+                            t.s.getSettings().setViewportMode(on ? GeckoSessionSettings.VIEWPORT_MODE_DESKTOP : GeckoSessionSettings.VIEWPORT_MODE_MOBILE);
+                        }
+                        if (content != null) content.reload();
                     }
                     break;
                 }
@@ -637,7 +1005,7 @@ public class MainActivity extends Activity {
                 }
                 case "clear":
                     Engine.runtime.getStorageController().clearData(StorageController.ClearFlags.ALL);
-                    if (content != null) content.purgeHistory();
+                    for (Tab t : tabs.values()) if (t.s != null) t.s.purgeHistory();
                     siteDecisions.clear();
                     saveSiteDecisions();
                     httpAllowed.clear();
@@ -670,11 +1038,67 @@ public class MainActivity extends Activity {
                 case "update":
                     new Thread(() -> Updater.check(MainActivity.this, true)).start();
                     break;
+                /* ----- Nouveautés ----- */
+                case "passwords":
+                    startActivity(new Intent(this, PasswordsActivity.class));
+                    break;
+                case "sync":
+                    if (incognito()) {
+                        notice("La synchro n'est pas disponible en navigation privée");
+                        break;
+                    }
+                    if ("now".equals(a)) Sync.run(this, true);
+                    else if ("status".equals(a)) call("onSyncStatus", Sync.status(this).toString());
+                    else Sync.setup(this);
+                    break;
+                case "syncput":
+                    Sync.put(this, a);
+                    break;
+                case "addons":
+                    Addons.cmd(this, a.startsWith("{") ? new JSONObject(a) : new JSONObject().put("op", a));
+                    break;
+                case "reader":
+                    toggleReader();
+                    break;
+                case "pip":
+                    requestPip(true);
+                    break;
+                case "translate":
+                    translateCmd(a);
+                    break;
+                case "find":
+                    if (content != null && !a.isEmpty()) content.getFinder().find(a, 0);
+                    break;
                 default:
                     // Commandes inconnues ou retirées : ignorées.
                     break;
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "Commande " + c, e);
+        }
+    }
+
+    /** Commandes d'onglets : {op: switch|close|closeall|keep|thumbs, id, url, ids}. */
+    private void tabCmd(JSONObject m) {
+        switch (m.optString("op")) {
+            case "switch":
+                switchTab(m.optString("id"), m.optString("url", ""));
+                break;
+            case "close":
+                closeTab(m.optString("id"));
+                break;
+            case "keep": {
+                JSONArray ids = m.optJSONArray("ids");
+                if (ids != null) keepTabs(ids);
+                break;
+            }
+            case "thumbs":
+                captureThumb(cur).accept(v -> {
+                    for (Map.Entry<String, String> e : thumbs.entrySet()) call("onThumb", e.getKey(), e.getValue());
+                }, e -> { });
+                break;
+            default:
+                break;
         }
     }
 
@@ -690,6 +1114,11 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    /** Page d'une autre extension (options, fenêtre…), jamais celle de l'interface d'AIR Navig. */
+    private boolean isOtherExtension(String u) {
+        return u != null && u.startsWith("moz-extension://") && (Engine.base == null || !u.startsWith(Engine.base));
+    }
+
     private boolean contentAllowed(String u) {
         if (grantedContent.contains(u)) return true;
         try {
@@ -701,48 +1130,84 @@ public class MainActivity extends Activity {
         return false;
     }
 
-    private boolean shouldUpgrade(Uri u) {
-        String h = u.getHost();
-        if (h == null) return false;
-        h = h.toLowerCase(Locale.ROOT);
-        return !httpAllowed.contains(h) && !PRIVATE_HOST.matcher(h).matches();
+    static boolean isPrivateHost(@Nullable String h) {
+        return h != null && PRIVATE_HOST.matcher(h.toLowerCase(Locale.ROOT)).matches();
     }
 
-    /** Toute navigation demandée par l'interface passe par ici : liste blanche de schémas, HTTPS en priorité. */
+    /** Toute navigation demandée par l'interface passe par ici : liste blanche de schémas. HTTPS en priorité (géré par Gecko). */
     void navigate(String url) {
-        if (url == null || content == null) return;
+        if (url == null) return;
+        if (content == null) {
+            // Aucun onglet encore : on en crée un.
+            String id = newId();
+            call("onNewTab", "{\"id\":\"" + id + "\",\"url\":" + JSONObject.quote(url) + ",\"opener\":\"\",\"active\":true}");
+            switchTab(id, url);
+            return;
+        }
         url = url.trim();
         if (url.isEmpty()) return;
         Uri u = Uri.parse(url);
         String s = u.getScheme() == null ? "" : u.getScheme().toLowerCase(Locale.ROOT);
         switch (s) {
             case "https":
+            case "http":
                 content.loadUri(url);
                 return;
-            case "http":
-                if (shouldUpgrade(u)) {
-                    upgradedHosts.add(u.getHost().toLowerCase(Locale.ROOT));
-                    content.loadUri("https" + url.substring(4));
-                } else {
-                    content.loadUri(url);
-                }
-                return;
             case "moz-extension":
-                if (isInternal(url)) content.loadUri(url);
+                if (isInternal(url) || isOtherExtension(url)) content.loadUri(url);
                 return;
             case "file":
                 if (allowLocal) content.loadUri(url);
-                else notice("Fichiers locaux désactivés (Autorisations › Fichiers locaux)");
+                else askLocalFiles(url);
                 return;
             case "content":
                 if (contentAllowed(url)) content.loadUri(url);
                 else notice("Fichier non autorisé : ouvre-le avec « Fichier HTML »");
                 return;
             case "about":
-                if ("about:blank".equals(url)) content.loadUri(url);
+                if ("about:blank".equals(url) || url.startsWith("about:reader?")) content.loadUri(url);
                 return;
             default:
                 // javascript:, data:, intent:, blob:… refusés depuis la barre d'adresse.
+        }
+    }
+
+    private void askLocalFiles(final String url) {
+        if (isFinishing()) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Ouvrir les fichiers du téléphone ?")
+                .setMessage("Les fichiers locaux (file://) sont désactivés par sécurité. Les activer permet d'ouvrir tes pages HTML, PDF et dossiers (file:///sdcard/…). Tu pourras les couper dans Autorisations.")
+                .setPositiveButton("Activer", (d, w) -> {
+                    toJs("window.setPerm&&setPerm('local',true)");
+                    allowLocal = true;
+                    requestFileAccess();
+                    if (content != null) content.loadUri(url);
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
+    }
+
+    /** Accès aux fichiers du stockage partagé pour file:// (Android 11+ : « accès à tous les fichiers »). */
+    private void requestFileAccess() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            if (Environment.isExternalStorageManager() || isFinishing()) return;
+            new AlertDialog.Builder(this)
+                    .setTitle("Accès aux fichiers")
+                    .setMessage("Pour ouvrir les fichiers de ton téléphone (file:///sdcard/…), Android demande l'autorisation « Accès à tous les fichiers ». Les fichiers que tu ouvres avec « Fichier HTML » marchent sans elle.")
+                    .setPositiveButton("Ouvrir les réglages", (d, w) -> {
+                        try {
+                            startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
+                        } catch (Exception e) {
+                            try {
+                                startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    })
+                    .setNegativeButton("Plus tard", null)
+                    .show();
+        } else if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != 0) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQ_STORAGE);
         }
     }
 
@@ -758,7 +1223,7 @@ public class MainActivity extends Activity {
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         i.addCategory(Intent.CATEGORY_OPENABLE);
         i.setType("*/*");
-        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/html", "application/xhtml+xml", "text/plain", "image/*"});
+        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/html", "application/xhtml+xml", "text/plain", "image/*", "application/pdf", "image/svg+xml"});
         try {
             startActivityForResult(i, REQ_OPEN);
         } catch (ActivityNotFoundException e) {
@@ -817,6 +1282,10 @@ public class MainActivity extends Activity {
         toJs(fn + "(" + JSONObject.quote(arg == null ? "" : arg) + ")");
     }
 
+    void call(String fn, String a1, String a2) {
+        toJs("window." + fn + "&&" + fn + "(" + JSONObject.quote(a1 == null ? "" : a1) + "," + JSONObject.quote(a2 == null ? "" : a2) + ")");
+    }
+
     private void onNav() {
         toJs("onNav(" + JSONObject.quote(curUrl == null ? "" : curUrl) + "," + canBack + "," + canFwd + "," + loading + ")");
     }
@@ -824,11 +1293,6 @@ public class MainActivity extends Activity {
     /** Traqueurs bloqués par background.js (par lots). */
     void onBlocked(JSONArray list) {
         toJs("onBlockedBatch(" + list.toString() + ")");
-    }
-
-    private static boolean sameHost(String a, String b) {
-        String x = Uri.parse(a).getHost(), y = Uri.parse(b).getHost();
-        return x != null && x.equalsIgnoreCase(y);
     }
 
     String errorPage(String kind, String url) {
@@ -839,22 +1303,37 @@ public class MainActivity extends Activity {
     /* ======================= Délégués Gecko : sites ======================= */
 
     private final class Nav implements GeckoSession.NavigationDelegate {
+        final Tab t;
+
+        Nav(Tab t) {
+            this.t = t;
+        }
+
         @Override
         public void onLocationChange(@NonNull GeckoSession s, @Nullable String url,
-                                     @NonNull List<org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission> perms,
+                                     @NonNull List<GeckoSession.PermissionDelegate.ContentPermission> perms,
                                      @NonNull Boolean hasUserGesture) {
-            curUrl = url == null ? "" : url;
-            onNav();
+            t.url = url == null ? "" : url;
+            t.translated = false;
+            t.offered = false;
+            if (t == cur) {
+                curUrl = t.url;
+                onNav();
+            } else {
+                tabInfo(t);
+            }
         }
 
         @Override
         public void onCanGoBack(@NonNull GeckoSession s, boolean b) {
-            canBack = b;
+            t.canBack = b;
+            if (t == cur) canBack = b;
         }
 
         @Override
         public void onCanGoForward(@NonNull GeckoSession s, boolean f) {
-            canFwd = f;
+            t.canFwd = f;
+            if (t == cur) canFwd = f;
         }
 
         /** Navigations décidées par les pages elles-mêmes (ou par l'appli). */
@@ -864,25 +1343,15 @@ public class MainActivity extends Activity {
             final String url = r.uri;
             Uri u = Uri.parse(url);
             String sc = u.getScheme() == null ? "" : u.getScheme().toLowerCase(Locale.ROOT);
-            String cur = curUrl;
-            boolean fromInternal = isInternal(cur);
+            String from = t.url;
+            boolean fromInternal = isInternal(from);
             switch (sc) {
                 case "https":
-                    return GeckoResult.allow();
                 case "http":
-                    if (shouldUpgrade(u)) {
-                        String h = u.getHost().toLowerCase(Locale.ROOT);
-                        if (upgradedHosts.contains(h) && cur != null && cur.startsWith("https://" + h)) {
-                            // Le site renvoie lui-même vers HTTP : on prévient au lieu de boucler.
-                            ui.post(() -> content.loadUri(errorPage("http", url)));
-                            return GeckoResult.deny();
-                        }
-                        upgradedHosts.add(h);
-                        ui.post(() -> content.loadUri("https" + url.substring(4)));
-                        return GeckoResult.deny();
-                    }
+                    // HTTPS en priorité : Gecko essaie d'abord https:// et revient seul en http:// si besoin.
                     return GeckoResult.allow();
                 case "moz-extension":
+                    if (isOtherExtension(url)) return GeckoResult.allow();
                     return isInternal(url) && (r.isDirectNavigation || fromInternal) ? GeckoResult.allow() : GeckoResult.deny();
                 case "air":
                     // Liens internes : uniquement depuis les pages d'AIR Navig, jamais depuis un site.
@@ -893,24 +1362,26 @@ public class MainActivity extends Activity {
                             String h = Uri.parse(target).getHost();
                             if (h != null) {
                                 httpAllowed.add(h.toLowerCase(Locale.ROOT));
-                                ui.post(() -> content.loadUri(target));
+                                ui.post(() -> s.loadUri(target));
                             }
                         }
                         return GeckoResult.deny();
                     }
-                    call("onAir", url);
+                    if (t == cur) call("onAir", url);
                     return GeckoResult.deny();
                 case "file":
-                    // Un fichier local ne s'ouvre que si l'utilisateur l'a autorisé.
-                    return allowLocal && (r.isDirectNavigation || (cur != null && cur.startsWith("file:")))
+                    // Un fichier local ne s'ouvre que si l'utilisateur l'a autorisé, et jamais depuis un site web.
+                    return allowLocal && (r.isDirectNavigation || (from != null && from.startsWith("file:")))
                             ? GeckoResult.allow() : GeckoResult.deny();
                 case "content":
                     return r.isDirectNavigation && contentAllowed(url) ? GeckoResult.allow() : GeckoResult.deny();
                 case "about":
-                    return "about:blank".equals(url) ? GeckoResult.allow() : GeckoResult.deny();
+                    return "about:blank".equals(url) || url.startsWith("about:reader?") ? GeckoResult.allow() : GeckoResult.deny();
+                case "blob":
+                    // Fichiers générés par la page elle-même (PDF, aperçus…).
+                    return GeckoResult.allow();
                 case "javascript":
                 case "data":
-                case "blob":
                 case "resource":
                 case "chrome":
                 case "jar":
@@ -921,7 +1392,7 @@ public class MainActivity extends Activity {
                         String fb = i.getStringExtra("browser_fallback_url");
                         if (i.getPackage() != null && i.getPackage().equals(getPackageName())) return GeckoResult.deny();
                         if (getPackageManager().resolveActivity(i.addCategory(Intent.CATEGORY_BROWSABLE), 0) == null) {
-                            if (fb != null && (fb.startsWith("https://") || fb.startsWith("http://"))) ui.post(() -> navigate(fb));
+                            if (fb != null && (fb.startsWith("https://") || fb.startsWith("http://"))) ui.post(() -> s.loadUri(fb));
                             return GeckoResult.deny();
                         }
                         openExternal(i, "Ce site veut ouvrir une autre appli.");
@@ -934,12 +1405,11 @@ public class MainActivity extends Activity {
             }
         }
 
+        /** Lien target=_blank ou window.open() autorisé : nouvel onglet (window.opener garde le lien, utile aux connexions « Se connecter avec… »). */
         @Nullable
         @Override
         public GeckoResult<GeckoSession> onNewSession(@NonNull GeckoSession s, @NonNull String uri) {
-            // Pas de fenêtres multiples : une fenêtre autorisée s'ouvre à la place de la page.
-            if (allowPopups) ui.post(() -> navigate(uri));
-            return null;
+            return GeckoResult.fromValue(newTabSession(uri, true));
         }
 
         /** Erreurs : pages d'AIR Navig. Certificat invalide = connexion toujours refusée, sans contournement. */
@@ -947,28 +1417,36 @@ public class MainActivity extends Activity {
         @Override
         public GeckoResult<String> onLoadError(@NonNull GeckoSession s, @Nullable String uri, @NonNull WebRequestError error) {
             String url = uri == null ? "" : uri;
-            Uri u = Uri.parse(url);
-            String host = u.getHost() == null ? "" : u.getHost().toLowerCase(Locale.ROOT);
-            boolean upgraded = url.startsWith("https://") && upgradedHosts.contains(host);
             String kind;
-            String shown = url;
             if (error.category == WebRequestError.ERROR_CATEGORY_SECURITY) {
-                kind = upgraded ? "https" : "ssl";
-                if (upgraded) shown = "http" + url.substring(5);
-                call("onNotice", "Certificat non valide : connexion bloquée");
-            } else if (upgraded) {
-                kind = "https";
-                shown = "http" + url.substring(5);
+                kind = "ssl";
+                if (t == cur) call("onNotice", "Certificat non valide : connexion bloquée");
             } else {
                 kind = "net";
             }
-            return GeckoResult.fromValue(errorPage(kind, shown));
+            return GeckoResult.fromValue(errorPage(kind, url));
+        }
+    }
+
+    private void tabInfo(Tab t) {
+        try {
+            call("onTabInfo", new JSONObject().put("id", t.id).put("url", t.url).put("title", t.title).toString());
+        } catch (Exception ignored) {
         }
     }
 
     private final class Progress implements GeckoSession.ProgressDelegate {
+        final Tab t;
+
+        Progress(Tab t) {
+            this.t = t;
+        }
+
         @Override
         public void onPageStart(@NonNull GeckoSession s, @NonNull String url) {
+            t.loading = true;
+            t.url = url;
+            if (t != cur) return;
             loading = true;
             lastProgress = -1;
             curUrl = url;
@@ -977,29 +1455,52 @@ public class MainActivity extends Activity {
 
         @Override
         public void onPageStop(@NonNull GeckoSession s, boolean success) {
+            t.loading = false;
+            if (t != cur) {
+                tabInfo(t);
+                return;
+            }
             loading = false;
             onNav();
             toJs("onProgress(100)");
+            ui.removeCallbacks(thumbLater);
+            ui.postDelayed(thumbLater, 900);
         }
 
         @Override
         public void onProgressChange(@NonNull GeckoSession s, int p) {
+            if (t != cur) return;
             // La barre de progression n'est mise à jour que par paliers de 10 %.
             if (p >= 100 || p - lastProgress >= 10 || p < lastProgress) {
                 lastProgress = p;
                 toJs("onProgress(" + p + ")");
             }
         }
+
+        @Override
+        public void onSessionStateChange(@NonNull GeckoSession s, @NonNull GeckoSession.SessionState state) {
+            t.state = state.toString();
+            if (!incognito()) saveTabStoreLater();
+        }
     }
 
     private final class Content implements GeckoSession.ContentDelegate {
+        final Tab t;
+
+        Content(Tab t) {
+            this.t = t;
+        }
+
         @Override
         public void onTitleChange(@NonNull GeckoSession s, @Nullable String title) {
-            call("onTitle", title == null ? "" : title);
+            t.title = title == null ? "" : title;
+            if (t == cur) call("onTitle", t.title);
+            else tabInfo(t);
         }
 
         @Override
         public void onFullScreen(@NonNull GeckoSession s, boolean full) {
+            if (t != cur) return;
             fullscreen = full;
             View decor = getWindow().getDecorView();
             if (full) {
@@ -1013,37 +1514,387 @@ public class MainActivity extends Activity {
         }
 
         @Override
+        public void onCloseRequest(@NonNull GeckoSession s) {
+            // window.close() d'une fenêtre ouverte par une page (connexion terminée…).
+            if (t.opener != null) toJs("window.onTabClosed&&onTabClosed(" + JSONObject.quote(t.id) + ")");
+        }
+
+        @Override
+        public void onContextMenu(@NonNull GeckoSession s, int x, int y, @NonNull ContextElement el) {
+            showContextMenu(el);
+        }
+
+        @Override
         public void onExternalResponse(@NonNull GeckoSession s, @NonNull WebResponse response) {
             download(response);
         }
 
         @Override
         public void onCrash(@NonNull GeckoSession s) {
-            restartContent();
+            restartTab(t);
         }
 
         @Override
         public void onKill(@NonNull GeckoSession s) {
-            restartContent();
+            restartTab(t);
         }
     }
 
     /** Un site qui fait planter le moteur ne fait pas planter l'appli. */
-    private void restartContent() {
-        final String last = curUrl;
+    private void restartTab(Tab t) {
+        final String last = t.url;
         try {
-            contentView.releaseSession();
-            if (content != null) content.close();
+            if (t == cur) contentView.releaseSession();
+            if (t.s != null) t.s.close();
         } catch (Throwable ignored) {
         }
-        createContent();
-        call("onNotice", "La page a planté et a été fermée par sécurité");
-        if (last != null && (last.startsWith("https://") || last.startsWith("http://"))) navigate(last);
+        t.s = null;
+        t.state = null;
+        if (t == cur) {
+            cur = null;
+            content = null;
+            switchTab(t.id, last);
+            call("onNotice", "La page a planté et a été rechargée");
+        }
+    }
+
+    /* ======================= Appui long : menu du lien / de l'image ======================= */
+
+    private void showContextMenu(final GeckoSession.ContentDelegate.ContextElement el) {
+        if (isFinishing()) return;
+        final String link = el.linkUri;
+        final String src = el.srcUri;
+        final boolean linkOk = link != null && (link.startsWith("http://") || link.startsWith("https://"));
+        final boolean imgOk = el.type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE && src != null
+                && (src.startsWith("http://") || src.startsWith("https://"));
+        if (!linkOk && !imgOk) return;
+        final List<String> labels = new ArrayList<>();
+        final List<Runnable> acts = new ArrayList<>();
+        if (linkOk) {
+            labels.add("Ouvrir dans un nouvel onglet");
+            acts.add(() -> openInNewTab(link));
+            labels.add("Ouvrir en arrière-plan");
+            acts.add(() -> toJs("window.openUrlBg&&openUrlBg(" + JSONObject.quote(link) + ")"));
+            labels.add("Ouvrir dans le bac à sable");
+            acts.add(() -> runCmd("sandbox", link));
+            labels.add("Copier l'adresse du lien");
+            acts.add(() -> copyText(link));
+            labels.add("Partager le lien");
+            acts.add(() -> runCmd("share", link));
+        }
+        if (imgOk) {
+            labels.add("Ouvrir l'image dans un nouvel onglet");
+            acts.add(() -> openInNewTab(src));
+            labels.add("Télécharger l'image");
+            acts.add(() -> downloadUrl(src));
+            labels.add("Copier l'adresse de l'image");
+            acts.add(() -> copyText(src));
+        }
+        String title = linkOk ? link : src;
+        new AlertDialog.Builder(this)
+                .setTitle(title.length() > 90 ? title.substring(0, 90) + "…" : title)
+                .setItems(labels.toArray(new String[0]), (d, w) -> acts.get(w).run())
+                .show();
+    }
+
+    private void copyText(String s) {
+        ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("lien", s));
+            notice("Copié");
+        }
+    }
+
+    private void downloadUrl(String url) {
+        if (!allowDownloads) {
+            call("onDlBlocked", url);
+            return;
+        }
+        try {
+            DownloadManager.Request q = new DownloadManager.Request(Uri.parse(url));
+            String name = fileName(url, null, null);
+            q.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            q.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
+            ((DownloadManager) getSystemService(DOWNLOAD_SERVICE)).enqueue(q);
+            call("onDownload", name);
+        } catch (Exception e) {
+            call("onNotice", "Téléchargement impossible");
+        }
+    }
+
+    /* ======================= Mode lecture ======================= */
+
+    private void toggleReader() {
+        if (content == null || curUrl == null) return;
+        if (curUrl.startsWith("about:reader?")) {
+            String orig = Uri.parse(curUrl).getQueryParameter("url");
+            if (canBack) content.goBack();
+            else if (orig != null) content.loadUri(orig);
+            return;
+        }
+        if (!curUrl.startsWith("http://") && !curUrl.startsWith("https://")) {
+            notice("Le mode lecture fonctionne sur les articles des sites web");
+            return;
+        }
+        content.loadUri("about:reader?url=" + Uri.encode(curUrl));
+    }
+
+    /* ======================= Vidéo en incrustation (Picture-in-Picture) ======================= */
+
+    private final class Media implements MediaSession.Delegate {
+        final Tab t;
+
+        Media(Tab t) {
+            this.t = t;
+        }
+
+        @Override
+        public void onPlay(@NonNull GeckoSession s, @NonNull MediaSession m) {
+            t.playing = true;
+        }
+
+        @Override
+        public void onPause(@NonNull GeckoSession s, @NonNull MediaSession m) {
+            t.playing = false;
+        }
+
+        @Override
+        public void onStop(@NonNull GeckoSession s, @NonNull MediaSession m) {
+            t.playing = false;
+        }
+
+        @Override
+        public void onDeactivated(@NonNull GeckoSession s, @NonNull MediaSession m) {
+            t.playing = false;
+        }
+
+        @Override
+        public void onFullscreen(@NonNull GeckoSession s, @NonNull MediaSession m, boolean enabled,
+                                 @Nullable MediaSession.ElementMetadata meta) {
+            if (meta != null && meta.width > 0 && meta.height > 0) {
+                t.vw = meta.width;
+                t.vh = meta.height;
+            }
+        }
+    }
+
+    private final class Pip implements PictureInPictureController.SessionPictureInPicture.Delegate {
+        final Tab t;
+
+        Pip(Tab t) {
+            this.t = t;
+        }
+
+        @Override
+        public void onEnterPictureInPicture(@NonNull GeckoSession s, @Nullable String info) {
+            if (t == cur) enterPip();
+        }
+
+        @Override
+        public void onExitPictureInPicture(@NonNull GeckoSession s) {
+            if (t == cur && Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode()) {
+                // La vidéo a été arrêtée par la page : on revient à l'appli.
+                Intent i = new Intent(MainActivity.this, MainActivity.this.getClass());
+                i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(i);
+            }
+        }
+    }
+
+    private void requestPip(final boolean manual) {
+        if (content == null || cur == null) return;
+        try {
+            content.getSessionPictureInPicture().request().accept(v -> {
+                if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode()) enterPip();
+            }, e -> {
+                if (fullscreen && cur != null && cur.playing) enterPip();
+                else if (manual) notice("Lance d'abord une vidéo pour la mettre en incrustation");
+            });
+        } catch (Throwable e) {
+            if (fullscreen) enterPip();
+        }
+    }
+
+    private void enterPip() {
+        if (Build.VERSION.SDK_INT < 26 || isFinishing()) return;
+        try {
+            long w = cur == null ? 16 : cur.vw, h = cur == null ? 9 : cur.vh;
+            float r = w / (float) h;
+            if (r > 2.39f) { w = 239; h = 100; }
+            else if (r < 1 / 2.39f) { w = 100; h = 239; }
+            PictureInPictureParams p = new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational((int) Math.min(w, Integer.MAX_VALUE), (int) Math.min(h, Integer.MAX_VALUE)))
+                    .build();
+            chromeView.setVisibility(View.GONE);
+            if (!enterPictureInPictureMode(p)) arrange();
+        } catch (Throwable e) {
+            arrange();
+            Log.w(TAG, "Incrustation", e);
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean in, Configuration c) {
+        super.onPictureInPictureModeChanged(in, c);
+        if (!in && content != null) {
+            try {
+                content.getSessionPictureInPicture().exit();
+            } catch (Throwable ignored) {
+            }
+        }
+        arrange();
+    }
+
+    /** Quitter l'appli pendant une vidéo plein écran : elle continue en incrustation. */
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (cur != null && cur.playing && fullscreen) requestPip(false);
+    }
+
+    /* ======================= Traduction (sur l'appareil, moteur Firefox Translations) ======================= */
+
+    private final class Translate implements TranslationsController.SessionTranslation.Delegate {
+        final Tab t;
+
+        Translate(Tab t) {
+            this.t = t;
+        }
+
+        @Override
+        public void onOfferTranslate(@NonNull GeckoSession s) {
+            if (t.offered) return;
+            t.offered = true;
+            if (t != cur) return;
+            if ("auto".equals(translateMode)) translateNow(t, false);
+            else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)));
+        }
+
+        @Override
+        public void onExpectedTranslate(@NonNull GeckoSession s) {
+            if (t == cur && "auto".equals(translateMode) && !t.translated) translateNow(t, false);
+        }
+
+        @Override
+        public void onTranslationStateChange(@NonNull GeckoSession s,
+                                             @Nullable TranslationsController.SessionTranslation.TranslationState st) {
+            t.tstate = st;
+            if (st != null && st.requestedTranslationPair != null) t.translated = true;
+            if (t == cur) pushTranslateState(t);
+        }
+    }
+
+    @Nullable
+    private static String docLang(Tab t) {
+        if (t == null || t.tstate == null || t.tstate.detectedLanguages == null) return null;
+        return t.tstate.detectedLanguages.docLangTag;
+    }
+
+    private static String userLang(Tab t) {
+        String u = t == null || t.tstate == null || t.tstate.detectedLanguages == null ? null : t.tstate.detectedLanguages.userLangTag;
+        if (u == null || u.isEmpty()) u = Locale.getDefault().getLanguage();
+        return u == null || u.isEmpty() ? "fr" : u;
+    }
+
+    static String langName(@Nullable String tag) {
+        if (tag == null || tag.isEmpty()) return "langue inconnue";
+        String n = Locale.forLanguageTag(tag).getDisplayLanguage(Locale.FRENCH);
+        return n == null || n.isEmpty() ? tag : n;
+    }
+
+    private void pushTranslateState(Tab t) {
+        try {
+            JSONObject j = new JSONObject();
+            String d = docLang(t);
+            j.put("doc", d == null ? "" : d);
+            j.put("docName", langName(d));
+            j.put("user", userLang(t));
+            j.put("on", t.translated);
+            boolean supported = t.tstate != null && t.tstate.detectedLanguages != null
+                    && Boolean.TRUE.equals(t.tstate.detectedLanguages.isDocLangTagSupported);
+            j.put("can", supported && d != null && !d.equalsIgnoreCase(userLang(t)));
+            j.put("err", t.tstate == null || t.tstate.error == null ? "" : t.tstate.error);
+            call("onTranslateState", j.toString());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void translateNow(final Tab t, boolean manual) {
+        if (t == null || t.s == null) return;
+        String from = docLang(t);
+        String to = userLang(t);
+        if (from == null || from.isEmpty()) {
+            if (manual) notice("Langue de la page pas encore détectée : réessaie dans un instant");
+            return;
+        }
+        if (from.equalsIgnoreCase(to)) {
+            if (manual) notice("La page est déjà en " + langName(to));
+            return;
+        }
+        TranslationsController.SessionTranslation st = t.s.getSessionTranslation();
+        if (st == null) {
+            notice("Traduction non disponible sur ce téléphone");
+            return;
+        }
+        notice("Traduction de " + langName(from) + " vers " + langName(to) + "… (la 1re fois, le modèle de langue est téléchargé)");
+        st.translate(from, to, new TranslationsController.SessionTranslation.TranslationOptions.Builder().downloadModel(true).build())
+                .accept(v -> {
+                    t.translated = true;
+                    if (t == cur) pushTranslateState(t);
+                }, e -> notice("Traduction impossible" + (e instanceof TranslationsController.TranslationsException
+                        && ((TranslationsController.TranslationsException) e).code == TranslationsController.TranslationsException.ERROR_LANGUAGE_NOT_SUPPORTED
+                        ? " : langue non prise en charge" : "")));
+    }
+
+    private void translateCmd(String a) {
+        if (a.startsWith("mode:")) {
+            translateMode = a.substring(5);
+            savePref("translate", translateMode);
+            return;
+        }
+        if (cur == null || cur.s == null) return;
+        TranslationsController.SessionTranslation st = cur.s.getSessionTranslation();
+        switch (a) {
+            case "do":
+                translateNow(cur, true);
+                break;
+            case "restore":
+                if (st != null) st.restoreOriginalPage().accept(v -> {
+                    if (cur != null) {
+                        cur.translated = false;
+                        pushTranslateState(cur);
+                    }
+                }, e -> notice("Impossible de revenir à la page d'origine"));
+                break;
+            case "toggle":
+                if (cur.translated) translateCmd("restore");
+                else translateNow(cur, true);
+                break;
+            case "never":
+                if (st != null) st.setNeverTranslateSiteSetting(true);
+                notice("Ce site ne sera plus traduit");
+                break;
+            default:
+                break;
+        }
     }
 
     /* ======================= Téléchargements ======================= */
 
     private void download(final WebResponse r) {
+        String disp = header(r, "content-disposition");
+        String mime = header(r, "content-type");
+        if (mime != null && mime.contains(";")) mime = mime.substring(0, mime.indexOf(';')).trim();
+        // Extension Firefox : installation (avec confirmation des permissions) au lieu d'un téléchargement.
+        if ("application/x-xpinstall".equals(mime) || (r.uri != null && r.uri.toLowerCase(Locale.ROOT).matches("^https://[^?#]+\\.xpi([?#].*)?$"))) {
+            closeQuietly(r.body);
+            if (incognito()) {
+                notice("Installe les extensions depuis la navigation normale");
+                return;
+            }
+            Addons.install(r.uri);
+            return;
+        }
         if (!allowDownloads) {
             call("onDlBlocked", r.uri);
             closeQuietly(r.body);
@@ -1051,15 +1902,13 @@ public class MainActivity extends Activity {
         }
         Uri u = Uri.parse(r.uri);
         String sc = u.getScheme();
-        if (!"https".equals(sc) && !"http".equals(sc)) {
+        boolean web = "https".equals(sc) || "http".equals(sc);
+        if (!web && !"blob".equals(sc) && !"data".equals(sc)) {
             call("onNotice", "Téléchargement non pris en charge pour ce type de lien");
             closeQuietly(r.body);
             return;
         }
-        String disp = header(r, "content-disposition");
-        String mime = header(r, "content-type");
-        if (mime != null && mime.contains(";")) mime = mime.substring(0, mime.indexOf(';')).trim();
-        final String name = fileName(r.uri, disp, mime);
+        final String name = fileName(web ? r.uri : "telechargement", disp, mime);
         final String type = mime;
         if (Build.VERSION.SDK_INT >= 29 && r.body != null) {
             // Le fichier reçu par Gecko est écrit directement dans « Téléchargements ».
@@ -1089,6 +1938,10 @@ public class MainActivity extends Activity {
             return;
         }
         closeQuietly(r.body);
+        if (!web) {
+            call("onNotice", "Téléchargement impossible sur cette version d'Android");
+            return;
+        }
         try {
             DownloadManager.Request q = new DownloadManager.Request(u);
             if (type != null) q.setMimeType(type);
@@ -1186,13 +2039,13 @@ public class MainActivity extends Activity {
     }
 
     /* Demandes d'autorisations Android faites pour Gecko (caméra, micro, position). */
-    private org.mozilla.geckoview.GeckoSession.PermissionDelegate.Callback androidCallback;
+    private GeckoSession.PermissionDelegate.Callback androidCallback;
 
-    void requestAndroid(String[] perms, org.mozilla.geckoview.GeckoSession.PermissionDelegate.Callback cb) {
+    void requestAndroid(String[] perms, GeckoSession.PermissionDelegate.Callback cb) {
         List<String> missing = new ArrayList<>();
         for (String p : perms) {
             // Position approximative seulement : la position précise n'est jamais demandée.
-            if (android.Manifest.permission.ACCESS_FINE_LOCATION.equals(p)) p = android.Manifest.permission.ACCESS_COARSE_LOCATION;
+            if (Manifest.permission.ACCESS_FINE_LOCATION.equals(p)) p = Manifest.permission.ACCESS_COARSE_LOCATION;
             if (checkSelfPermission(p) != 0 && !missing.contains(p)) missing.add(p);
         }
         if (missing.isEmpty()) {
@@ -1220,6 +2073,8 @@ public class MainActivity extends Activity {
         super.onActivityResult(code, result, data);
         if (code == REQ_FILE) {
             prompts.onFileResult(result, data);
+        } else if (code == Sync.REQ_CREATE || code == Sync.REQ_OPEN) {
+            if (result == RESULT_OK) Sync.onPicked(this, code, data);
         } else if (code == REQ_OPEN && result == RESULT_OK && data != null && data.getData() != null) {
             Uri d = data.getData();
             if (!"content".equals(d.getScheme())) return;
@@ -1235,8 +2090,22 @@ public class MainActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (testHook(intent)) return;
         String u = incomingUrl(intent);
         if (u != null) call("openUrl", u);
+    }
+
+    /** Essais automatiques (versions de test uniquement) : adb shell am start … --es airtest "js:…" ou "cmd:arg". */
+    private boolean testHook(Intent intent) {
+        if (intent == null || (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) == 0) return false;
+        String t = intent.getStringExtra("airtest");
+        if (t == null) return false;
+        if (t.startsWith("js:")) toJs(t.substring(3));
+        else {
+            int i = t.indexOf(':');
+            runCmd(i < 0 ? t : t.substring(0, i), i < 0 ? "" : t.substring(i + 1));
+        }
+        return true;
     }
 
     @Override
@@ -1249,7 +2118,23 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         Engine.front = this;
+        Passwords.privateFront = incognito();
         if (content != null) content.setActive(true);
+        if (!incognito() && Sync.configured(this) && System.currentTimeMillis() - Sync.last(this) > 10 * 60_000L) {
+            ui.postDelayed(() -> {
+                if (uiReady) Sync.run(this, false);
+            }, 4000);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (!incognito()) {
+            ui.removeCallbacks(saveTabStore);
+            saveTabStore.run();
+            if (Sync.configured(this) && uiReady && System.currentTimeMillis() - Sync.last(this) > 2 * 60_000L) Sync.run(this, false);
+        }
     }
 
     @Override
@@ -1263,8 +2148,16 @@ public class MainActivity extends Activity {
             chromeView.releaseSession();
         } catch (Throwable ignored) {
         }
-        // Fermer la session privée efface ses cookies, son cache et son historique.
-        if (content != null) content.close();
+        // Fermer les sessions privées efface leurs cookies, leur cache et leur historique.
+        for (Tab t : tabs.values()) {
+            if (t.s != null) {
+                try {
+                    t.s.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        tabs.clear();
         if (uiSession != null) uiSession.close();
         super.onDestroy();
     }

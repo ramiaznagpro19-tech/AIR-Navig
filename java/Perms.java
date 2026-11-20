@@ -57,8 +57,19 @@ final class Perms implements PermissionDelegate {
             case PERMISSION_STORAGE_ACCESS:
                 // Exception au blocage anti-pistage ou accès aux cookies d'un site tiers : non.
                 return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
+            case PERMISSION_PERSISTENT_STORAGE:
+                // Stockage persistant (applis web hors ligne) : sans risque, accepté.
+                return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
+            case PERMISSION_LOCAL_NETWORK_ACCESS:
+            case PERMISSION_LOCAL_DEVICE_ACCESS: {
+                // Un site local (localhost, 192.168.x.x…) parle librement au réseau local ;
+                // un site public doit demander (protection contre les attaques de routeurs, imprimantes…).
+                String h = Uri.parse(origin).getHost();
+                if (MainActivity.isPrivateHost(h)) return GeckoResult.fromValue(ContentPermission.VALUE_ALLOW);
+                return ask(origin, "lna", "ton réseau local (box, appareils, serveurs en local)");
+            }
             default:
-                // Notifications, stockage persistant, réalité virtuelle, appareils locaux… : refusés.
+                // Notifications, réalité virtuelle… : refusés.
                 return GeckoResult.fromValue(ContentPermission.VALUE_DENY);
         }
     }

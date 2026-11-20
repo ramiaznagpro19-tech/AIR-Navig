@@ -69,7 +69,19 @@ jobs:
       - name: Compiler
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: gradle --no-daemon --stacktrace assembleRelease -Pgecko="$GECKO" -Pvcode="$VCODE" -Pvname="$VNAME"
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace assembleRelease -Pgecko="$GECKO" -Pvcode="$VCODE" -Pvname="$VNAME" 2>&1 | tee build.log
+
+      - name: Journal de compilation (en cas d'échec)
+        if: failure()
+        run: |
+          rm -f build/key.jks
+          mkdir -p journal && cp build.log journal/ 2>/dev/null || echo "pas de journal" > journal/build.log
+          grep -nE "error:|FAILED|What went wrong|Exception" journal/build.log | head -200 > journal/erreurs.txt || true
+          cd journal && git init -q -b journal && git config user.name ci && git config user.email ci@airnavig.invalid
+          git add -A && git commit -qm "Échec de compilation ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" journal
 
       - name: Vérifier l'APK
         run: |

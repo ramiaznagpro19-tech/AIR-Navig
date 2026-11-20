@@ -222,6 +222,34 @@ html.th-citrus{--bg:#fff7e6;--bar:rgba(255,255,255,.6);--bar2:rgba(255,255,255,.
 .master.off .ic{background:rgba(255,107,122,.14);color:var(--danger)}
 .master .t{flex:1}.master b{font-size:16px}
 .master small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+
+/* Onglets : aperçu réel de la page */
+.tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.tcard{position:relative;display:flex;flex-direction:column;gap:0;min-height:0;padding:0;overflow:hidden;border-radius:calc(16px*var(--rs,1));background:var(--bar);border:1px solid var(--line);text-align:left;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.tcard.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tcard .pv{position:relative;aspect-ratio:3/4;background:var(--bar2);overflow:hidden}
+.tcard .pv .shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;display:none}
+.tcard.has .pv .shot{display:block}
+.tcard .pv .ph{position:absolute;inset:0;display:grid;place-items:center}
+.tcard.has .pv .ph{display:none}
+.tcard .pv .ph .fav{width:40px;height:40px;object-fit:contain;opacity:.85}
+.tcard .tt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--line)}
+.tcard .tt .fav{width:18px;height:18px;object-fit:contain;flex:none}
+.tcard .tt .t{font-size:12.5px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.tcard .c{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(0,0,0,.55)}
+.tcard .c svg{width:15px;height:15px}
+.tcard.drag{opacity:.25}
+.tcard.target{outline:2px dashed var(--accent);outline-offset:2px}
+.tcard.ghost{position:fixed;z-index:99;pointer-events:none;box-shadow:0 12px 30px rgba(0,0,0,.45);transition:none}
+#trBar{display:flex;align-items:center;gap:8px;padding:7px 10px 7px 12px;font-size:13px;color:var(--text);background:rgba(139,124,255,.12);border-bottom:1px solid var(--line)}
+#trBar[hidden]{display:none}
+#trBar svg{width:18px;height:18px;flex:none;color:var(--accent);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#trBar span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#trBar button{padding:6px 10px;border-radius:calc(10px*var(--rs,1));font-weight:600;font-size:12.5px}
+#trDo{background:var(--accent);color:var(--onaccent,#fff)}
+#trNever,#trNo{color:var(--muted)}
+html.pos-top #trBar{order:6;border-bottom:0;border-top:1px solid var(--line)}
+html.pos-right #trBar{display:none!important}
 </style>
 </head>
 <body>
@@ -234,6 +262,7 @@ html.th-citrus{--bg:#fff7e6;--bar:rgba(255,255,255,.6);--bar2:rgba(255,255,255,.
     <button id="whyBtn">Pourquoi ?</button>
   </div>
   <div id="notice" hidden></div>
+  <div id="trBar" hidden><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8"/><path d="M13 21l4-10 4 10M14.5 17.5h5"/></svg><span id="trText"></span><button id="trDo">Traduire</button><button id="trNever" title="Jamais pour ce site">Jamais</button><button id="trNo" aria-label="Fermer">✕</button></div>
   <div id="prog"><i></i></div>
   <div id="row">
   <div class="omni">
@@ -297,6 +326,8 @@ html.th-citrus{--bg:#fff7e6;--bar:rgba(255,255,255,.6);--bar2:rgba(255,255,255,.
     <section class="sec" data-s="tabs">
       <div style="display:flex;gap:10px;margin-bottom:12px"><button class="btn" id="tNew">+ Nouvel onglet</button><button class="btn ghost" id="tCloseAll">Tout fermer</button></div>
       <div class="tabs" id="tabList"></div>
+      <p class="muted small" style="margin:10px 2px">Appuie longuement sur un onglet puis fais-le glisser pour le déplacer.</p>
+      <div id="remoteTabs"></div>
     </section>
 
     <section class="sec" data-s="bookmarks"><div id="bmList"></div></section>
@@ -348,6 +379,9 @@ html.th-citrus{--bg:#fff7e6;--bar:rgba(255,255,255,.6);--bar2:rgba(255,255,255,.
     <section class="sec" data-s="set_look"><div id="lookBody"></div></section>
     <section class="sec" data-s="set_bar"><div id="barBody"></div></section>
     <section class="sec" data-s="set_home"><div id="homeBody"></div></section>
+    <section class="sec" data-s="set_sync"><div id="syncBody"></div></section>
+    <section class="sec" data-s="set_tr"><div id="trBody"></div></section>
+    <section class="sec" data-s="addons"><div id="addonBody"></div></section>
   </div>
 </div>
 

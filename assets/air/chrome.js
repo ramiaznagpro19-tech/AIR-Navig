@@ -200,7 +200,11 @@ document.documentElement.classList.toggle('pos-top',set.pos==='top');
 document.documentElement.classList.toggle('pos-right',set.pos==='right');
 function onSysDark(v){v=!!v;if(v===sysDark)return;sysDark=v;if(set.theme==='auto'||set.siteDark==='auto')applySettings('theme')}
 const saveSet=()=>S.set('settings',set);
+const newTabId=()=>'k'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 let tabs=S.get('tabs',[{url:'',title:'Accueil'}]), cur=Math.min(S.get('cur',0),tabs.length-1);
+if(!Array.isArray(tabs)||!tabs.length)tabs=[{url:'',title:'Accueil'}];
+tabs.forEach(t=>{if(!t.id)t.id=newTabId()}); if(cur<0)cur=0;
+const THUMBS={};
 let history=S.get('history',[]), bookmarks=S.get('bookmarks',[]), notes=S.get('notes',{}), log=S.get('log',[]);
 let K=Object.assign({blocked:0,cleaned:0,isolated:0},S.get('counters',{}));
 let time=S.get('time',{d:'',s:{}});
@@ -225,7 +229,10 @@ function resolve(text){
   const m=text.match(/^!([gdb])\s+(.+)$/i)||text.match(/^(.+)\s+!([gdb])$/i);
   if(m){const[b,q]=text.startsWith('!')?[m[1],m[2]]:[m[2],m[1]];const k=Object.keys(ENGINES).find(k=>ENGINES[k].bang===b.toLowerCase());return ENGINES[k].search(q)}
   if(/^[a-z][a-z0-9+.-]*:\/\//i.test(text))return text;
-  if(/^(localhost|\d{1,3}(\.\d{1,3}){3})(:\d+)?(\/.*)?$/i.test(text))return 'http://'+text;
+  if(/^(about:reader|file:)/i.test(text))return text;
+  if(/^\/(sdcard|storage|data\/local|mnt)\//i.test(text))return 'file://'+text;
+  if(/^(localhost|[a-z0-9-]+\.localhost|\d{1,3}(\.\d{1,3}){3}|\[[0-9a-f:]+\]|[a-z0-9-]+(\.[a-z0-9-]+)*\.(local|lan|home\.arpa|internal|test))(:\d+)?(\/.*)?$/i.test(text))return 'http://'+text;
+  if(/^[a-z0-9-]+:\d{2,5}(\/.*)?$/i.test(text))return 'http://'+text;
   if(!/\s/.test(text)&&/^[^\s/]+\.[a-z]{2,}(:\d+)?(\/.*)?$/i.test(text))return 'https://'+text;
   return ENGINES[set.engine].search(text);
 }
@@ -250,6 +257,7 @@ function drawBar(){
   const a=$('#addr'), q=queryOf(st.url);
   if(!st.url||isHome(st.url)) a.innerHTML=set.pos==='right'?'<span class="t ph">Rechercher</span>':'<span class="t ph"><b>AIR Navig</b> · Rechercher ou saisir une adresse</span>';
   else if(st.url.startsWith(BLOCKED)) a.innerHTML='<span class="t" style="color:var(--danger)">Site dangereux bloqué</span>';
+  else if(isReader(st.url)) a.innerHTML=ICON.book.replace('<svg','<svg class="lock"')+'<span class="t">Mode lecture · '+esc(host(readerSrc(st.url)))+'</span>';
   else if(isLocalFile(st.url)) a.innerHTML=ICON.file.replace('<svg','<svg class="lock"')+'<span class="t">Fichier local · '+esc(localName(st.url))+'</span>';
   else if(q) a.innerHTML=ICON.search.replace('<svg','<svg class="lock" style="color:var(--muted)"')+'<span class="t">'+esc(q.q)+'</span>';
   else a.innerHTML=(st.url.startsWith('https:')?ICON.lock:'')+'<span class="t">'+esc(host(st.url)||st.url)+'</span>';
@@ -278,8 +286,8 @@ function onNav(url,back,fwd,loading){
   }
   st.url=url;
   if(url.startsWith(BLOCKED)){st.url=url;drawBar();return}
-  tabs[cur]={url:isHome(url)?'':url,title:isHome(url)?'Accueil':isLocalFile(url)?localName(url):(st.title||h)};
-  if(!loading&&!isInternal(url)) addHistory(url);
+  tabs[cur]=Object.assign(tabs[cur]||{id:newTabId()},{url:isHome(url)?'':url,title:isHome(url)?'Accueil':isLocalFile(url)?localName(url):isReader(url)?(st.title||'Mode lecture'):(st.title||h)});
+  if(!loading&&!isInternal(url)&&!/^about:/.test(url)) addHistory(url);
   saveTabs(); drawBar(); trackNotes();
 }
 function onTitle(t){st.title=t;if(!isHome(st.url)){tabs[cur].title=t;saveTabs();const last=history[history.length-1];if(last&&last.url===st.url){last.title=t;saveLater()}}}
@@ -319,12 +327,14 @@ function onAir(uri){
 function onBack(){
   if(!$('#full').hidden){ if(curSec&&curSec.startsWith('set_')&&prevSec==='settings')return show('settings'); if((curSec==='engines'||curSec==='perms')&&prevSec==='settings')return show('settings'); if(curSec==='why'||curSec==='shield'&&prevSec==='menu') return show(prevSec||'menu'); return collapse(); }
   if(st.back) return A('back');
+  if(tabs[cur]&&tabs[cur].opener&&tabs.length>1){const o=tabs.findIndex(t=>t.id===tabs[cur].opener);closeTab(cur,o);return}
   if(st.url.startsWith(BLOCKED)) return A('go',homeUrl());
   if(!isHome(st.url)) return A('go',homeUrl());
-  if(tabs.length>1){tabs.splice(cur,1);cur=Math.max(0,cur-1);saveTabs();return A('go',tabs[cur].url||homeUrl())}
+  if(tabs.length>1){closeTab(cur);return}
   A('exit');
 }
-function openUrl(u){tabs.push({url:u,title:host(u)});cur=tabs.length-1;saveTabs();collapse();A('go',u)}
+function openUrl(u){const t={id:newTabId(),url:u,title:host(u)};tabs.splice(cur+1,0,t);cur=cur+1;saveTabs();collapse();switchTo(cur,u)}
+function openUrlBg(u){tabs.splice(cur+1,0,{id:newTabId(),url:u,title:host(u)});saveTabs();drawBar();notice('Ouvert dans un nouvel onglet');A('tab',JSON.stringify({op:'preload',id:tabs[cur+1].id,url:u}))}
 function onDownload(name){notice('Téléchargement lancé : '+name+' (dossier Téléchargements)')}
 function onNotice(m){notice(m)}
 function onDlBlocked(url){addLog({type:'dl',site:host(st.url),file:url.split('/').pop().split('?')[0]});notice('Téléchargements désactivés dans les autorisations')}
@@ -350,14 +360,14 @@ function addHistory(url){if(INCOG)return;if(history.length&&history[history.leng
 
 /* ===== Écrans ===== */
 let curSec=null, prevSec=null;
-const TITLES={perms:'Autorisations des sites',search:'Rechercher',engines:'Moteur de recherche',menu:'Menu',shield:'Bouclier',why:'Pourquoi ce site est isolé',tabs:'Onglets',bookmarks:'Favoris',history:'Historique',notes:'Notes du site',time:'Temps passé',settings:'Réglages',about:'À propos d’AIR Navig',set_prot:'Anti-pubs et protections',set_look:'Thèmes et apparence',set_bar:'Barre et boutons',set_home:'Page d’accueil'};
+const TITLES={perms:'Autorisations des sites',search:'Rechercher',engines:'Moteur de recherche',menu:'Menu',shield:'Bouclier',why:'Pourquoi ce site est isolé',tabs:'Onglets',bookmarks:'Favoris',history:'Historique',notes:'Notes du site',time:'Temps passé',settings:'Réglages',about:'À propos d’AIR Navig',set_prot:'Anti-pubs et protections',set_look:'Thèmes et apparence',set_bar:'Barre et boutons',set_home:'Page d’accueil',set_sync:'Synchronisation',set_tr:'Traduction des pages',addons:'Extensions'};
 function show(s){
   prevSec=curSec&&curSec!==s?curSec:prevSec; curSec=s;
   A('bar','0'); lastBar=0;
   $('#full').hidden=false; bar.style.display='none';
   $('#fTitle').textContent=(INCOG?'Privé · ':'')+TITLES[s];
   $$('.sec').forEach(x=>x.classList.toggle('on',x.dataset.s===s));
-  ({perms:drawPerms,search:drawSearch,engines:drawEngines,menu:drawMenu,shield:drawShield,why:drawWhy,tabs:drawTabs,bookmarks:drawBookmarks,history:drawHistory,notes:drawNotes,time:drawTime,settings:drawSettings,about:drawAbout,set_prot:drawProt,set_look:drawLook,set_bar:drawBarSet,set_home:drawHomeSet}[s]||(()=>{}))();
+  ({perms:drawPerms,search:drawSearch,engines:drawEngines,menu:drawMenu,shield:drawShield,why:drawWhy,tabs:drawTabs,bookmarks:drawBookmarks,history:drawHistory,notes:drawNotes,time:drawTime,settings:drawSettings,about:drawAbout,set_prot:drawProt,set_look:drawLook,set_bar:drawBarSet,set_home:drawHomeSet,set_sync:drawSync,set_tr:drawTr,addons:drawAddons}[s]||(()=>{}))();
   $('.fbody').scrollTop=0;
 }
 function collapse(){ $('#full').hidden=true; bar.style.display=''; curSec=null; prevSec=null; document.activeElement&&document.activeElement.blur(); requestAnimationFrame(reportHeight); }
@@ -424,13 +434,18 @@ function drawMenu(){
     ['desk','Version ordi',set.desktop,()=>{set.desktop=!set.desktop;saveSet();A('desktop',set.desktop?DESKTOP_UA:'');drawMenu()}],
     ['box','Bac à sable',false,()=>openSandbox(st.url)],
     ['file','Fichier HTML',false,()=>{collapse();A('openfile')}],
+    ['book',isReader(st.url)?'Quitter la lecture':'Mode lecture',isReader(st.url),()=>{collapse();A('reader')}],
+    ['tr',TR.on?'Page d’origine':'Traduire',TR.on,()=>{collapse();A('translate','toggle')}],
+    ['pip','Vidéo en incrustation',false,()=>{collapse();A('pip')}],
+    ['lockk','Mots de passe',false,()=>{collapse();A('passwords')}],
+    ['puzzle','Extensions',false,()=>show('addons')],
     ['key','Autorisations',false,()=>show('perms')],
     ['trash','Effacer données',false,()=>{A('clear');notice('Cookies, cache et données des sites effacés');collapse()}]
   ];
   if(set.pos==='top') T.unshift(['back','Précédent',false,()=>{collapse();if(st.back)A('back');else A('go',homeUrl())}],['fwd','Suivant',false,()=>{collapse();A('fwd')}]);
   const g=$('#tools');g.innerHTML='';
   T.forEach(([ic,label,on,fn])=>{const b=document.createElement('button');b.className='tool'+(on?' on':'');b.innerHTML=ICON[ic]+'<span>'+label+'</span>';b.onclick=fn;g.append(b)});
-  const L=[['shield','Bouclier : qui a voulu faire quoi',K.blocked,'shield'],['tabs','Onglets',tabs.length,'tabs'],['star','Favoris',bookmarks.length,'bookmarks'],['hist','Historique','', 'history'],['note','Notes de ce site',Object.keys(notes).length,'notes'],['clock','Temps passé aujourd’hui','','time'],['gear','Réglages','','settings'],['shield','À propos · AIR, par Rami','','about']];
+  const L=[['shield','Bouclier : qui a voulu faire quoi',K.blocked,'shield'],['tabs','Onglets',tabs.length,'tabs'],['star','Favoris',bookmarks.length,'bookmarks'],['hist','Historique','', 'history'],['note','Notes de ce site',Object.keys(notes).length,'notes'],['clock','Temps passé aujourd’hui','','time'],['sync','Synchronisation',SYNC.on?'✓':'','set_sync'],['puzzle','Extensions','','addons'],['gear','Réglages','','settings'],['shield','À propos · AIR, par Rami','','about']];
   if(!INCOG)L.unshift(['incog','Nouvel onglet de navigation privée','','__incog']);
   const l=$('#links');l.innerHTML='';
   L.forEach(([ic,label,n,s])=>{const b=document.createElement('button');b.className='row';b.innerHTML=ICON[ic]+'<span class="t"><div>'+label+'</div></span>'+(n!==''?'<span class="badge">'+n+'</span>':'');b.onclick=()=>s==='__incog'?openIncognito():show(s);l.append(b)});
@@ -440,7 +455,7 @@ function openIncognito(){collapse();A('incognito',JSON.stringify({s:set,u:''}))}
 function toggleBookmark(){
   if(!st.url||isHome(st.url))return;
   const i=bookmarks.findIndex(b=>b.url===st.url);
-  if(i>=0)bookmarks.splice(i,1);else bookmarks.push({url:st.url,title:st.title||host(st.url)});
+  if(i>=0){bmDelete(bookmarks[i].url);bookmarks.splice(i,1)}else bookmarks.push({url:st.url,title:st.title||host(st.url),t:Date.now()});
   S.set('bookmarks',bookmarks);drawMenu();
 }
 
@@ -482,20 +497,58 @@ function drawWhy(){
 }
 $('#isoExit').onclick=()=>{};
 
-/* Onglets */
+/* Onglets : chaque onglet garde sa page (session Gecko) ; aperçu réel ; glisser pour réordonner */
+function switchTo(i,url){cur=Math.max(0,Math.min(i,tabs.length-1));saveTabs();A('tab',JSON.stringify({op:'switch',id:tabs[cur].id,url:url||tabs[cur].url||homeUrl()}));drawBar()}
+function onNewTab(js){let o;try{o=JSON.parse(js)}catch{return}if(!o||!o.id||tabs.some(t=>t.id===o.id))return;
+  const at=Math.max(0,tabs.findIndex(t=>t.id===o.opener)); const t={id:o.id,url:o.url||'',title:host(o.url)||'Nouvel onglet',opener:o.opener||''};
+  tabs.splice(o.opener?at+1:tabs.length,0,t); if(o.active!==false)cur=tabs.indexOf(t); else if(tabs.indexOf(t)<=cur)cur++;
+  saveTabs();collapse();drawBar();if(o.active!==false)notice('Nouvel onglet ouvert par la page')}
+function onTabInfo(js){let o;try{o=JSON.parse(js)}catch{return}const t=tabs.find(x=>x.id===o.id);if(!t)return;if(o.url&&!isHome(o.url))t.url=o.url;if(o.title)t.title=o.title;saveTabs();if(curSec==='tabs')drawTabs()}
+function onTabClosed(id){const i=tabs.findIndex(t=>t.id===id);if(i<0)return;const o=tabs.findIndex(t=>t.id===tabs[i].opener);closeTab(i,o)}
+function onThumb(id,data){THUMBS[id]=data;const img=document.querySelector('.tcard[data-id="'+id+'"] .shot');if(img){img.src=data;img.parentNode.classList.add('has')}}
+function tabsKeep(){A('tab',JSON.stringify({op:'keep',ids:tabs.map(t=>t.id)}))}
 function drawTabs(){
   const l=$('#tabList');l.innerHTML='';
-  tabs.forEach((t,i)=>{const b=document.createElement('button');b.className='tcard'+(i===cur?' cur':'');
-    b.innerHTML=(t.url?'<img src="'+esc(fav(t.url))+'" alt="" onerror="this.style.visibility=\'hidden\'">':logoImg(set.engine))+'<span class="t">'+esc(t.title||host(t.url)||'Accueil')+'</span><span class="c">'+ICON.x+'</span>';
-    b.onclick=e=>{if(e.target.closest('.c')){closeTab(i);drawTabs();return}cur=i;saveTabs();collapse();A('go',t.url||homeUrl())};l.append(b)});
+  A('tab',JSON.stringify({op:'thumbs'}));
+  tabs.forEach((t,i)=>{const b=document.createElement('div');b.className='tcard'+(i===cur?' cur':'')+(THUMBS[t.id]?' has':'');b.dataset.id=t.id;b.dataset.i=i;
+    const icon=t.url?'<img class="fav" src="'+esc(fav(t.url))+'" alt="" onerror="this.style.visibility=\'hidden\'">':logoImg(set.engine).replace('<img','<img class="fav"');
+    b.innerHTML='<div class="pv"><img class="shot" alt="" '+(THUMBS[t.id]?'src="'+THUMBS[t.id]+'"':'')+'><div class="ph">'+icon+'</div></div><div class="tt">'+icon+'<span class="t">'+esc(t.title||host(t.url)||'Accueil')+'</span></div><button class="c" aria-label="Fermer">'+ICON.x+'</button>';
+    l.append(b)});
+  drag(l);
+  const rt=S.get('remoteTabs',[]);const box=$('#remoteTabs');if(box){box.innerHTML='';
+    if(rt.length){box.append(head('Sur tes autres appareils'));rt.forEach(d=>{const c=card();c.append(el('div','set','<span class="t"><b>'+esc(d.name||'Appareil')+'</b><small>'+(d.t?'synchronisé '+ago(d.t):'')+'</small></span>'));(d.tabs||[]).slice(0,30).forEach(x=>c.append(rowEl(fav(x.url),x.title||host(x.url),host(x.url),()=>openUrl(x.url))));box.append(c)})}}
 }
-function closeTab(i){tabs.splice(i,1);if(!tabs.length)tabs=[{url:'',title:'Accueil'}];if(cur>=tabs.length)cur=tabs.length-1;else if(i<cur)cur--;saveTabs();if(i<=cur||tabs.length===1)A('go',tabs[cur].url||homeUrl());drawBar()}
-$('#tNew').onclick=()=>{tabs.push({url:'',title:'Accueil'});cur=tabs.length-1;saveTabs();collapse();A('go',homeUrl())};
-$('#tCloseAll').onclick=()=>{tabs=[{url:'',title:'Accueil'}];cur=0;saveTabs();collapse();A('go',homeUrl())};
+/* Glisser-déposer : appui long sur un aperçu puis déplacement */
+function drag(list){
+  let src=null,ghost=null,timer=null,sx=0,sy=0,moved=false,over=-1;
+  const cards=()=>[...list.querySelectorAll('.tcard')];
+  const idx=(x,y)=>{let best=-1,bd=1e9;cards().forEach((c,i)=>{if(c===src)return;const r=c.getBoundingClientRect();const d=Math.hypot(r.left+r.width/2-x,r.top+r.height/2-y);if(d<bd){bd=d;best=i}});return best};
+  list.onpointerdown=e=>{const c=e.target.closest('.tcard');if(!c)return;if(e.target.closest('.c'))return;sx=e.clientX;sy=e.clientY;moved=false;
+    timer=setTimeout(()=>{src=c;c.classList.add('drag');const r=c.getBoundingClientRect();ghost=c.cloneNode(true);ghost.classList.add('ghost');ghost.style.width=r.width+'px';ghost.style.left=r.left+'px';ghost.style.top=r.top+'px';document.body.append(ghost);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}},320)};
+  list.onpointermove=e=>{if(!src){if(Math.hypot(e.clientX-sx,e.clientY-sy)>10)clearTimeout(timer);return}e.preventDefault();moved=true;
+    const r=src.getBoundingClientRect();ghost.style.transform='translate('+(e.clientX-sx)+'px,'+(e.clientY-sy)+'px) scale(1.04)';
+    const i=idx(e.clientX,e.clientY);cards().forEach((c,k)=>c.classList.toggle('target',k===i));over=i;
+    const fb=$('.fbody'),fr=fb.getBoundingClientRect();if(e.clientY<fr.top+40)fb.scrollTop-=12;else if(e.clientY>fr.bottom-40)fb.scrollTop+=12};
+  const end=e=>{clearTimeout(timer);if(src){const from=+src.dataset.i;ghost&&ghost.remove();src.classList.remove('drag');
+      if(moved&&over>=0&&over!==from){const id=tabs[cur].id;const [t]=tabs.splice(from,1);tabs.splice(over,0,t);cur=tabs.findIndex(x=>x.id===id);saveTabs();drawBar()}
+      src=null;ghost=null;over=-1;setTimeout(drawTabs,0);return}
+    if(e.type!=='pointerup')return;const c=e.target.closest('.tcard');if(!c)return;const i=+c.dataset.i;
+    if(e.target.closest('.c')){closeTab(i);drawTabs();return}
+    if(Math.hypot(e.clientX-sx,e.clientY-sy)<12){collapse();switchTo(i)}};
+  list.onpointerup=end;list.onpointercancel=end;
+  list.oncontextmenu=e=>e.preventDefault();
+}
+function closeTab(i,goTo){const t=tabs[i];if(!t)return;A('tab',JSON.stringify({op:'close',id:t.id}));delete THUMBS[t.id];const wasCur=i===cur;tabs.splice(i,1);
+  if(!tabs.length){tabs=[{id:newTabId(),url:'',title:'Accueil'}];cur=0;saveTabs();switchTo(0,homeUrl());return}
+  if(wasCur){let n=goTo!=null&&goTo>=0?goTo:Math.max(0,i-1);if(goTo!=null&&goTo>i)n--;switchTo(Math.min(n,tabs.length-1))}
+  else{if(i<cur)cur--;saveTabs()}
+  drawBar()}
+$('#tNew').onclick=()=>{tabs.push({id:newTabId(),url:'',title:'Accueil'});collapse();switchTo(tabs.length-1,homeUrl())};
+$('#tCloseAll').onclick=()=>{tabs.forEach(t=>A('tab',JSON.stringify({op:'close',id:t.id})));tabs=[{id:newTabId(),url:'',title:'Accueil'}];cur=0;collapse();switchTo(0,homeUrl())};
 
 /* Favoris, historique */
 function drawBookmarks(){const l=$('#bmList');l.innerHTML=bookmarks.length?'':'<p class="muted small">Ajoute un favori depuis le menu ⋯.</p>';
-  bookmarks.forEach((b,i)=>{const r=rowEl(fav(b.url),b.title,host(b.url),()=>go(b.url));const d=document.createElement('span');d.className='del';d.innerHTML=ICON.x;d.onclick=e=>{e.stopPropagation();bookmarks.splice(i,1);S.set('bookmarks',bookmarks);drawBookmarks()};r.append(d);l.append(r)})}
+  bookmarks.forEach((b,i)=>{const r=rowEl(fav(b.url),b.title,host(b.url),()=>go(b.url));const d=document.createElement('span');d.className='del';d.innerHTML=ICON.x;d.onclick=e=>{e.stopPropagation();bmDelete(b.url);bookmarks.splice(i,1);S.set('bookmarks',bookmarks);drawBookmarks()};r.append(d);l.append(r)})}
 function drawHistory(){const l=$('#hList');l.innerHTML='';const items=history.slice().reverse().slice(0,200);if(!items.length)l.innerHTML='<p class="muted small">Rien pour l’instant.</p>';
   items.forEach(h=>{const r=rowEl(fav(h.url),h.title,host(h.url),()=>go(h.url));r.insertAdjacentHTML('beforeend','<span class="v">'+new Date(h.t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</span>');l.append(r)})}
 $('#hClear').onclick=()=>{history=[];S.set('history',[]);drawHistory()};
@@ -550,7 +603,11 @@ function drawSettings(){
     navRow(ICON.layout,'Barre et boutons','Position '+POS_NAMES[set.pos]+', taille, boutons affichés',()=>show('set_bar')),
     navRow(ICON.home,'Page d’accueil','Fond, message de bienvenue, éléments affichés',()=>show('set_home')),
     navRow(logoImg(set.engine),'Moteur de recherche',ENGINES[set.engine].name,()=>show('engines')),
-    navRow(ICON.key,'Autorisations des sites','Micro, caméra, position, pop-up, téléchargements, fichiers locaux',()=>show('perms'))
+    navRow(ICON.key,'Autorisations des sites','Micro, caméra, position, pop-up, téléchargements, fichiers locaux',()=>show('perms')),
+    navRow(ICON.sync,'Synchronisation',SYNC.on?'Activée'+(SYNC.last?' · '+ago(SYNC.last):''):'Favoris, onglets, historique et mots de passe entre tes appareils',()=>show('set_sync')),
+    navRow(ICON.lockk,'Mots de passe',(aboutCacheN()||0)+' enregistré(s) · import CSV',()=>A('passwords')),
+    navRow(ICON.tr,'Traduction des pages',{auto:'Automatique',offer:'Proposée',off:'Désactivée'}[set.translate]||'Proposée',()=>show('set_tr')),
+    navRow(ICON.puzzle,'Extensions','Extensions Firefox (addons.mozilla.org)',()=>show('addons'))
   );
   const l=$('#setList');l.innerHTML='';
   l.append(swRow('Version ordinateur des sites','Demande aux sites leur version pour ordinateur.',()=>set.desktop,v=>{set.desktop=v;saveSet();applySettings('desktop')}));
@@ -718,11 +775,103 @@ $('#bHome').onclick=()=>A('go',homeUrl());
 $('#bTabs').onclick=()=>show('tabs');
 $('#bMenu').onclick=()=>show('menu');
 
+
+/* ===== Nouveautés : synchro, traduction, extensions, lecture, incrustation ===== */
+Object.assign(ICON,{
+  book:'<svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8 7h8M8 11h6"/></svg>',
+  tr:'<svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8"/><path d="M13 21l4-10 4 10M14.5 17.5h5"/></svg>',
+  pip:'<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1"/></svg>',
+  lockk:'<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.5"/></svg>',
+  puzzle:'<svg viewBox="0 0 24 24"><path d="M10 3a2 2 0 0 1 4 0v2h4v4h2a2 2 0 0 1 0 4h-2v6h-5v-2a2 2 0 0 0-4 0v2H4v-5h2a2 2 0 0 0 0-4H4V5h6z"/></svg>',
+  sync:'<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14 5.3M4 12A8 8 0 0 1 18 6.7"/><path d="M18 2v5h-5M6 22v-5h5"/></svg>',
+});
+const isReader=u=>/^about:reader\?/i.test(u||'');
+const readerSrc=u=>{try{return new URL(u).searchParams.get('url')||''}catch{return ''}};
+function aboutCacheN(){try{return JSON.parse(AIR.about()).passwords||0}catch{return 0}}
+/* Autorisation changée par l'appli (ex. « Activer les fichiers locaux ») */
+function setPerm(k,v){set.perms[k]=!!v;saveSet();sendPerms();if(curSec==='perms')drawPerms()}
+
+/* --- Synchronisation chiffrée --- */
+let SYNC=(()=>{try{return JSON.parse(new URLSearchParams(location.search).get('i')||'{}').sync||{}}catch{return {}}})();
+function onSyncStatus(js){try{SYNC=JSON.parse(js)||{}}catch{}if(curSec==='set_sync')drawSync();if(curSec==='settings')drawSettings()}
+function bmDelete(url){if(INCOG)return;const d=S.get('bmDel',{});d[url]=Date.now();S.set('bmDel',d)}
+/* Fusion avec le fichier distant : favoris (ajouts / suppressions datés), historique, onglets des autres appareils */
+function syncMerge(remoteStr,dev,devName,manual){
+  let R={};try{R=JSON.parse(remoteStr||'{}')||{}}catch{R={}}
+  const now=Date.now(), old=now-120*864e5;
+  const del=Object.assign({},R.bmDel||{});const mine=S.get('bmDel',{});for(const k in mine)del[k]=Math.max(del[k]||0,mine[k]);
+  for(const k in del)if(del[k]<old)delete del[k];
+  const map=new Map();
+  for(const b of [...(Array.isArray(R.bookmarks)?R.bookmarks:[]),...bookmarks]){if(!b||typeof b.url!=='string')continue;const o=map.get(b.url);const t=+b.t||0;if(!o||t>(+o.t||0))map.set(b.url,{url:b.url,title:String(b.title||(o&&o.title)||''),t})}
+  bookmarks=[...map.values()].filter(b=>!(del[b.url]>(b.t||0)));
+  S.set('bookmarks',bookmarks);S.set('bmDel',del);
+  const hm=new Map();for(const h of [...(Array.isArray(R.history)?R.history:[]),...history]){if(h&&typeof h.url==='string'&&h.t)hm.set(h.url+'|'+h.t,{url:h.url,title:String(h.title||''),t:+h.t})}
+  history=[...hm.values()].sort((a,b)=>a.t-b.t).slice(-2000);S.set('history',history);
+  const devices=(R.devices&&typeof R.devices==='object')?Object.assign({},R.devices):{};
+  devices[dev]={name:devName,t:now,tabs:tabs.filter(t=>/^https?:/i.test(t.url||'')).map(t=>({url:t.url,title:t.title||''})).slice(0,100)};
+  for(const k in devices)if(!devices[k]||devices[k].t<now-60*864e5)delete devices[k];
+  S.set('remoteTabs',Object.keys(devices).filter(k=>k!==dev).map(k=>devices[k]).sort((a,b)=>b.t-a.t));
+  if(curSec==='tabs')drawTabs();if(curSec==='bookmarks')drawBookmarks();
+  A('syncput',JSON.stringify({bookmarks,bmDel:del,history,devices,manual:!!manual}));
+}
+function drawSync(){
+  const b=$('#syncBody');b.innerHTML='';
+  const st=SYNC.on?(SYNC.err?'<span style="color:var(--danger)">'+esc(SYNC.err)+'</span>':'Dernière synchro : '+(SYNC.last?ago(SYNC.last):'jamais')):'Désactivée';
+  b.append(el('div','master'+(SYNC.on?'':' off'),'<span class="ic">'+ICON.sync+'</span><span class="t"><b>'+(SYNC.on?'Synchro activée':'Synchro désactivée')+'</b><small>'+st+'</small></span>'));
+  if(INCOG){b.append(el('p','muted small','La synchronisation n’est pas disponible en navigation privée.'));return}
+  b.append(card(
+    el('div','set','<span class="t">Comment ça marche<small>Favoris, onglets ouverts, historique et mots de passe sont rangés dans <b>un seul fichier</b> que tu choisis (Google Drive, Nextcloud, OneDrive…), chiffré par <b>ta phrase secrète</b> (AES-256). Ni AIR, ni Google, ni personne d’autre ne peut le lire. Sur ton autre appareil, choisis le même fichier et la même phrase.</small></span>'),
+    SYNC.on?el('div','set','<span class="t">Fichier<small>'+esc(SYNC.file||'?')+' · cet appareil : '+esc(SYNC.device||'')+'</small></span>'):null));
+  const row=el('div','');row.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin:12px 0';
+  if(SYNC.on){const n=el('button','btn','Synchroniser maintenant');n.onclick=()=>A('sync','now');const g=el('button','btn ghost','Gérer');g.onclick=()=>A('sync','setup');row.append(n,g)}
+  else{const n=el('button','btn','Activer la synchronisation');n.onclick=()=>A('sync','setup');row.append(n)}
+  b.append(row);
+  const rt=S.get('remoteTabs',[]);if(rt.length){b.append(head('Tes autres appareils'));const c=card();rt.forEach(d=>c.append(el('div','set','<span class="t">'+esc(d.name||'Appareil')+'<small>'+(d.tabs||[]).length+' onglet(s) · '+ago(d.t)+'</small></span>')));b.append(c)}
+}
+
+/* --- Traduction (sur le téléphone, moteur Firefox Translations : rien n'est envoyé à un service en ligne) --- */
+if(!['auto','offer','off'].includes(set.translate))set.translate=(()=>{try{return JSON.parse(new URLSearchParams(location.search).get('i')||'{}').translate||'offer'}catch{return 'offer'}})();
+let TR={on:false,can:false,doc:'',docName:''};
+function onTranslateState(js){try{TR=Object.assign(TR,JSON.parse(js))}catch{}if(TR.on)$('#trBar').hidden=true;if(curSec==='menu')drawMenu()}
+function onTranslateOffer(name){if(set.translate!=='offer')return;$('#trText').textContent='Page en '+name+'. La traduire ?';$('#trBar').hidden=false;requestAnimationFrame(reportHeight);clearTimeout(window.__trT);window.__trT=setTimeout(()=>{$('#trBar').hidden=true;requestAnimationFrame(reportHeight)},15000)}
+$('#trDo').onclick=()=>{$('#trBar').hidden=true;A('translate','do');requestAnimationFrame(reportHeight)};
+$('#trNo').onclick=()=>{$('#trBar').hidden=true;requestAnimationFrame(reportHeight)};
+$('#trNever').onclick=()=>{$('#trBar').hidden=true;A('translate','never');requestAnimationFrame(reportHeight)};
+function drawTr(){
+  const b=$('#trBody');b.innerHTML='';
+  b.append(el('p','muted small','Les pages sont traduites <b>sur ton téléphone</b> par le moteur Firefox Translations : le texte n’est envoyé à aucun service en ligne. La première fois, le modèle de la langue (quelques Mo) est téléchargé depuis Mozilla.'));
+  const c=card();[['auto','Automatique','Les pages dans une autre langue sont traduites dès leur ouverture.'],['offer','Proposer','Une barre te propose de traduire la page.'],['off','Désactivée','Tu peux toujours traduire depuis le menu ⋯.']].forEach(([k,t,d])=>{
+    const r=el('label','set','<span class="t">'+t+'<small>'+d+'</small></span><input type="radio" name="trm" class="sw">');const i=r.querySelector('input');i.checked=set.translate===k;i.onchange=()=>{set.translate=k;saveSet();A('translate','mode:'+k)};c.append(r)});
+  b.append(c);
+}
+
+/* --- Extensions --- */
+let ADDONS=[];
+function onAddons(js){try{ADDONS=JSON.parse(js)||[]}catch{ADDONS=[]}if(curSec==='addons')drawAddonsList()}
+function drawAddons(){A('addons','list');drawAddonsList()}
+function drawAddonsList(){
+  const b=$('#addonBody');b.innerHTML='';
+  const top=el('div','');top.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px';
+  const f=el('button','btn','Trouver des extensions');f.onclick=()=>{collapse();A('addons','browse')};top.append(f);b.append(top);
+  b.append(el('p','muted small',INCOG?'Les extensions s’installent depuis la navigation normale.':'Extensions Firefox pour Android, depuis addons.mozilla.org (vérifiées et signées par Mozilla). Appuie sur « Ajouter à Firefox » : AIR Navig te montre ce qu’elles pourront faire avant de les installer.'));
+  if(!ADDONS.length){b.append(el('p','muted small','Aucune extension installée.'));return}
+  ADDONS.forEach(x=>{const c=card();
+    c.append(el('div','set',(x.icon?'<img src="'+esc(x.icon)+'" alt="" style="width:32px;height:32px;border-radius:8px;flex:none">':ICON.puzzle)+'<span class="t"><b>'+esc(x.name)+'</b> <small>'+esc(x.version)+(x.desc?' · '+esc(x.desc):'')+'</small></span>'));
+    c.append(swRow('Activée','',()=>x.on,()=>A('addons',JSON.stringify({op:'toggle',id:x.id}))));
+    c.append(swRow('En navigation privée','Autoriser cette extension dans les onglets privés.',()=>x.priv,()=>A('addons',JSON.stringify({op:'private',id:x.id}))));
+    const r=el('div','');r.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:10px 6px';
+    if(x.action){const a=el('button','btn',esc(x.action));a.onclick=()=>{collapse();A('addons',JSON.stringify({op:'action',id:x.id}))};r.append(a)}
+    if(x.options){const o=el('button','btn ghost','Options');o.onclick=()=>{collapse();A('addons',JSON.stringify({op:'options',id:x.id}))};r.append(o)}
+    const d=el('button','btn red','Supprimer');d.onclick=()=>A('addons',JSON.stringify({op:'remove',id:x.id}));r.append(d);
+    c.append(r);b.append(c)});
+}
+
 /* ===== Démarrage ===== */
 applySettings();
 drawBar();
 (function start(){
   const initial=decodeURIComponent(location.hash.slice(1)||'');
-  if(initial&&/^https?:/i.test(initial)){tabs.push({url:initial,title:host(initial)});cur=tabs.length-1;saveTabs();A('go',initial)}
-  else A('go',tabs[cur]?.url||homeUrl());
+  tabsKeep();
+  if(initial&&/^(https?|content):/i.test(initial)){tabs.push({id:newTabId(),url:initial,title:host(initial)});cur=tabs.length-1;saveTabs();switchTo(cur,initial)}
+  else switchTo(cur,tabs[cur]?.url||homeUrl());
 })();

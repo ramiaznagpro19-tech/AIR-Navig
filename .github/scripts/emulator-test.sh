@@ -1,26 +1,42 @@
 #!/bin/bash
-# Installe AIR Navig sur l'émulateur, l'ouvre, fait des captures et garde le journal.
+# Installe AIR Navig sur l'émulateur, l'ouvre, essaie les fonctions et garde captures + journal.
 # Chaque commande est limitée dans le temps pour qu'un blocage ne fige pas l'essai.
 set -x
 mkdir -p out
 A() { timeout 60 adb "$@"; }
-shot() { timeout 30 adb exec-out screencap -p > "out/$1.png"; }
+shot() { sleep 1; timeout 30 adb exec-out screencap -p > "out/$1.png"; }
+T() { A shell am start -n app.airnavig/.MainActivity --es airtest "$1"; }
 APK=$(ls build/outputs/apk/debug/*.apk | head -1)
 timeout 180 adb install -r -g "$APK" > out/install.txt 2>&1
 A logcat -c
 A shell am start -n app.airnavig/.MainActivity
 sleep 35
-shot 1-demarrage
-W=$(A shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); SW=${W%x*}; SH=${W#*x}
-A shell input tap $((SW*90/100)) $((SH*95/100)); sleep 5
-shot 2-menu
-A shell input tap $((SW*50/100)) $((SH*20/100)); sleep 3
-A shell am start -a android.intent.action.VIEW -d "https://www.lemonde.fr" app.airnavig
-sleep 40
-shot 3-lemonde
+shot 01-demarrage
 A shell am start -a android.intent.action.VIEW -d "https://fr.wikipedia.org/wiki/Paris" app.airnavig
-sleep 25
-shot 4-wikipedia
+sleep 30
+shot 02-wikipedia
+T "js:show('tabs')"; sleep 6
+shot 03-onglets
+T "js:collapse()"; sleep 2
+T "reader"; sleep 15
+shot 04-lecture
+T "reader"; sleep 8
+T "js:show('menu')"; sleep 4
+shot 05-menu
+T "js:show('set_sync')"; sleep 3
+shot 06-synchro
+T "js:show('addons')"; sleep 6
+shot 07-extensions
+T "js:collapse()"; sleep 2
+A shell am start -a android.intent.action.VIEW -d "https://de.wikipedia.org/wiki/Berlin" app.airnavig
+sleep 30
+shot 08-allemand
+T "translate:do"; sleep 60
+shot 09-traduit
+T "js:show('tabs')"; sleep 6
+shot 10-onglets
+T "js:go('localhost:8080')"; sleep 8
+shot 11-localhost
 timeout 60 adb logcat -d > out/logcat-complet.txt
-grep -E "GeckoConsole|AIRNavig|AndroidRuntime|FATAL" out/logcat-complet.txt | tail -1500 > out/logcat-gecko.txt
+grep -E "GeckoConsole|AIRNavig|AndroidRuntime|FATAL|Translations|GeckoView" out/logcat-complet.txt | grep -v "MozAfterPaint\|No impl for message" | tail -2000 > out/logcat-gecko.txt
 exit 0

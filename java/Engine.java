@@ -70,8 +70,16 @@ final class Engine {
                 .consoleOutput((context.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0)
                 .aboutConfigEnabled(false)
                 .fontInflation(adapt)
+                // Mots de passe : Gecko détecte les formulaires, AIR Navig les garde chiffrés (Passwords).
+                .loginAutofillEnabled(true)
+                // Traduction sur l'appareil (Firefox Translations) : Gecko signale les pages en langue étrangère.
+                .translationsOfferPopup(true)
+                // Installation des extensions depuis addons.mozilla.org.
+                .extensionsWebAPIEnabled(true)
                 .build();
         runtime = GeckoRuntime.create(context.getApplicationContext(), settings);
+        runtime.setAutocompleteStorageDelegate(Passwords.get(context));
+        Addons.init(runtime);
 
         runtime.getWebExtensionController()
                 .ensureBuiltIn(EXT_URI, EXT_ID)
@@ -138,6 +146,30 @@ final class Engine {
         {"security.certerrors.mitm.priming.enabled", "false"},
         // Navigation sécurisée gardée, sans envoi d'empreintes de fichiers à Google
         {"browser.safebrowsing.downloads.remote.enabled", "false"},
+        // Compatibilité des sites
+        //  - HTTPS en priorité, géré par Gecko (repli automatique en http:// si le site n'a pas https, formulaires conservés)
+        {"dom.security.https_first", "true"},
+        {"dom.security.https_first_schemeless", "true"},
+        //  - correctifs officiels de Mozilla pour les sites cassés (interventions et « shims »)
+        {"extensions.webcompat.enable_interventions", "true"},
+        {"extensions.webcompat.enable_shims", "true"},
+        {"extensions.webcompat.perform_injections", "true"},
+        {"extensions.webcompat.perform_ua_overrides", "true"},
+        //  - lecteur PDF intégré
+        {"pdfjs.disabled", "false"},
+        // Mots de passe : formulaires reconnus et remplis
+        {"signon.rememberSignons", "true"},
+        {"signon.autofillForms", "true"},
+        {"signon.generation.enabled", "true"},
+        // Traduction : moteur local Firefox Translations
+        {"browser.translations.enable", "true"},
+        {"browser.translations.automaticallyPopup", "true"},
+        // Mode lecture
+        {"reader.parse-on-load.enabled", "true"},
+        // Picture-in-Picture
+        {"media.videocontrols.picture-in-picture.enabled", "true"},
+        // Fichiers locaux : listes de dossiers file:// lisibles
+        {"network.dir.format", "2"},
     };
 
     /** Écrit le fichier de réglages lu par GeckoView au démarrage du moteur. */
