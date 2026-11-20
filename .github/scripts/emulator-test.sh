@@ -15,28 +15,33 @@ shot 01-demarrage
 A shell am start -a android.intent.action.VIEW -d "https://fr.wikipedia.org/wiki/Paris" app.airnavig
 sleep 30
 shot 02-wikipedia
-T "js:show('tabs')"; sleep 6
+T "show:tabs"; sleep 6
 shot 03-onglets
-T "js:collapse()"; sleep 2
+T "collapse"; sleep 2
 T "reader"; sleep 15
 shot 04-lecture
 T "reader"; sleep 8
-T "js:show('menu')"; sleep 4
+T "show:menu"; sleep 4
 shot 05-menu
-T "js:show('set_sync')"; sleep 3
+T "show:set_sync"; sleep 3
 shot 06-synchro
-T "js:show('addons')"; sleep 6
+T "show:addons"; sleep 6
 shot 07-extensions
-T "js:collapse()"; sleep 2
+T "collapse"; sleep 2
 A shell am start -a android.intent.action.VIEW -d "https://de.wikipedia.org/wiki/Berlin" app.airnavig
 sleep 30
 shot 08-allemand
 T "translate:do"; sleep 60
 shot 09-traduit
-T "js:show('tabs')"; sleep 6
+T "show:tabs"; sleep 6
 shot 10-onglets
-T "js:go('localhost:8080')"; sleep 8
+T "type:localhost:8080"; sleep 8
 shot 11-localhost
+T "type:/sdcard/"; sleep 5
+shot 12-fichiers
+A shell input keyevent KEYCODE_BACK; sleep 2
+T "show:set_tr"; sleep 3
+shot 13-traduction
 timeout 60 adb logcat -d > out/logcat-complet.txt
 grep -E "GeckoConsole|AIRNavig|AndroidRuntime|FATAL|Translations|GeckoView" out/logcat-complet.txt | grep -v "MozAfterPaint\|No impl for message" | tail -2000 > out/logcat-gecko.txt
 exit 0

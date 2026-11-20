@@ -170,6 +170,8 @@ public class MainActivity extends Activity {
         TranslationsController.SessionTranslation.TranslationState tstate;
         boolean translated;
         boolean offered;
+        boolean readerable;
+        WebExtension.Port port;
 
         Tab(String id) {
             this.id = id;
@@ -429,6 +431,7 @@ public class MainActivity extends Activity {
         s.setMediaSessionDelegate(new Media(t));
         s.setPictureInPictureDelegate(new Pip(t));
         s.setTranslationsSessionDelegate(new Translate(t));
+        if (Engine.ext != null) s.getWebExtensionController().setMessageDelegate(Engine.ext, new PageLink(t), "air_page");
         return s;
     }
 
@@ -1137,13 +1140,8 @@ public class MainActivity extends Activity {
     /** Toute navigation demandée par l'interface passe par ici : liste blanche de schémas. HTTPS en priorité (géré par Gecko). */
     void navigate(String url) {
         if (url == null) return;
-        if (content == null) {
-            // Aucun onglet encore : on en crée un.
-            String id = newId();
-            call("onNewTab", "{\"id\":\"" + id + "\",\"url\":" + JSONObject.quote(url) + ",\"opener\":\"\",\"active\":true}");
-            switchTab(id, url);
-            return;
-        }
+        // Pas encore d'onglet affiché : l'interface en choisit un juste après (switchTab).
+        if (content == null) return;
         url = url.trim();
         if (url.isEmpty()) return;
         Uri u = Uri.parse(url);
@@ -1313,9 +1311,12 @@ public class MainActivity extends Activity {
         public void onLocationChange(@NonNull GeckoSession s, @Nullable String url,
                                      @NonNull List<GeckoSession.PermissionDelegate.ContentPermission> perms,
                                      @NonNull Boolean hasUserGesture) {
+            String prev = t.url == null ? "" : t.url;
             t.url = url == null ? "" : url;
-            t.translated = false;
-            t.offered = false;
+            if (!stripHash(prev).equals(stripHash(t.url))) {
+                t.translated = false;
+                t.offered = false;
+            }
             if (t == cur) {
                 curUrl = t.url;
                 onNav();
@@ -1426,6 +1427,11 @@ public class MainActivity extends Activity {
             }
             return GeckoResult.fromValue(errorPage(kind, url));
         }
+    }
+
+    private static String stripHash(String u) {
+        int i = u.indexOf('#');
+        return i < 0 ? u : u.substring(0, i);
     }
 
     private void tabInfo(Tab t) {
@@ -1624,19 +1630,69 @@ public class MainActivity extends Activity {
 
     /* ======================= Mode lecture ======================= */
 
-    private void toggleReader() {
-        if (content == null || curUrl == null) return;
-        if (curUrl.startsWith("about:reader?")) {
-            String orig = Uri.parse(curUrl).getQueryParameter("url");
-            if (canBack) content.goBack();
-            else if (orig != null) content.loadUri(orig);
-            return;
+    /** Liaison avec le script de la page (mode lecture). */
+    private final class PageLink implements WebExtension.MessageDelegate {
+        final Tab t;
+
+        PageLink(Tab t) {
+            this.t = t;
         }
-        if (!curUrl.startsWith("http://") && !curUrl.startsWith("https://")) {
+
+        @Override
+        public void onConnect(@NonNull WebExtension.Port port) {
+            if (!port.sender.isTopLevel()) {
+                port.disconnect();
+                return;
+            }
+            t.port = port;
+            t.readerable = false;
+            port.setDelegate(new WebExtension.PortDelegate() {
+                @Override
+                public void onPortMessage(@NonNull Object message, @NonNull WebExtension.Port p) {
+                    if (p != t.port || !(message instanceof JSONObject)) return;
+                    JSONObject m = (JSONObject) message;
+                    if (m.has("readerable")) {
+                        t.readerable = m.optBoolean("readerable");
+                        if (t == cur) toJs("window.onReaderable&&onReaderable(" + t.readerable + ")");
+                    } else if (m.has("readerFail") && t == cur) {
+                        notice("Pas d'article à mettre en mode lecture sur cette page");
+                    } else if (m.has("reading") && t == cur) {
+                        toJs("window.onReading&&onReading(true)");
+                    }
+                }
+
+                @Override
+                public void onDisconnect(@NonNull WebExtension.Port p) {
+                    if (t.port == p) t.port = null;
+                }
+            });
+        }
+
+        @Nullable
+        @Override
+        public GeckoResult<Object> onMessage(@NonNull String nativeApp, @NonNull Object message,
+                                             @NonNull WebExtension.MessageSender sender) {
+            return null;
+        }
+    }
+
+    /* ======================= Mode lecture ======================= */
+
+    private void toggleReader() {
+        if (cur == null || curUrl == null) return;
+        if (!curUrl.startsWith("http://") && !curUrl.startsWith("https://") && !curUrl.startsWith("file:")) {
             notice("Le mode lecture fonctionne sur les articles des sites web");
             return;
         }
-        content.loadUri("about:reader?url=" + Uri.encode(curUrl));
+        if (cur.port == null) {
+            notice("La page n'est pas encore prête");
+            return;
+        }
+        try {
+            cur.port.postMessage(new JSONObject().put("reader", 1));
+        } catch (Exception e) {
+            notice("Mode lecture indisponible sur cette page");
+        }
     }
 
     /* ======================= Vidéo en incrustation (Picture-in-Picture) ======================= */
@@ -1781,6 +1837,14 @@ public class MainActivity extends Activity {
             t.tstate = st;
             if (st != null && st.requestedTranslationPair != null) t.translated = true;
             if (t == cur) pushTranslateState(t);
+            // Gecko ne propose pas toujours lui-même : on décide à partir de la langue détectée.
+            if (!t.offered && !t.translated && canTranslate(t)) {
+                t.offered = true;
+                if (t == cur) {
+                    if ("auto".equals(translateMode)) translateNow(t, false);
+                    else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)));
+                }
+            }
         }
     }
 
@@ -1802,6 +1866,18 @@ public class MainActivity extends Activity {
         return n == null || n.isEmpty() ? tag : n;
     }
 
+    private static boolean canTranslate(Tab t) {
+        String d = docLang(t);
+        return t != null && t.tstate != null && t.tstate.detectedLanguages != null
+                && Boolean.TRUE.equals(t.tstate.detectedLanguages.isDocLangTagSupported)
+                && d != null && !d.isEmpty() && !baseLang(d).equalsIgnoreCase(baseLang(userLang(t)));
+    }
+
+    private static String baseLang(String tag) {
+        int i = tag.indexOf('-');
+        return i > 0 ? tag.substring(0, i) : tag;
+    }
+
     private void pushTranslateState(Tab t) {
         try {
             JSONObject j = new JSONObject();
@@ -1812,7 +1888,7 @@ public class MainActivity extends Activity {
             j.put("on", t.translated);
             boolean supported = t.tstate != null && t.tstate.detectedLanguages != null
                     && Boolean.TRUE.equals(t.tstate.detectedLanguages.isDocLangTagSupported);
-            j.put("can", supported && d != null && !d.equalsIgnoreCase(userLang(t)));
+            j.put("can", supported && canTranslate(t));
             j.put("err", t.tstate == null || t.tstate.error == null ? "" : t.tstate.error);
             call("onTranslateState", j.toString());
         } catch (Exception ignored) {
@@ -1827,7 +1903,7 @@ public class MainActivity extends Activity {
             if (manual) notice("Langue de la page pas encore détectée : réessaie dans un instant");
             return;
         }
-        if (from.equalsIgnoreCase(to)) {
+        if (baseLang(from).equalsIgnoreCase(baseLang(to))) {
             if (manual) notice("La page est déjà en " + langName(to));
             return;
         }
@@ -2101,6 +2177,9 @@ public class MainActivity extends Activity {
         String t = intent.getStringExtra("airtest");
         if (t == null) return false;
         if (t.startsWith("js:")) toJs(t.substring(3));
+        else if (t.startsWith("show:")) toJs("show(" + JSONObject.quote(t.substring(5)) + ")");
+        else if (t.equals("collapse")) toJs("collapse()");
+        else if (t.startsWith("type:")) toJs("go(" + JSONObject.quote(t.substring(5)) + ")");
         else {
             int i = t.indexOf(':');
             runCmd(i < 0 ? t : t.substring(0, i), i < 0 ? "" : t.substring(i + 1));
