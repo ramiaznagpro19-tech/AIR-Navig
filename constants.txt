@@ -1,0 +1,133 @@
+Compiled from "GeckoSession.java"
+public interface org.mozilla.geckoview.GeckoSession$PermissionDelegate {
+  public static final int PERMISSION_GEOLOCATION = 0;
+  public static final int PERMISSION_DESKTOP_NOTIFICATION = 1;
+  public static final int PERMISSION_PERSISTENT_STORAGE = 2;
+  public static final int PERMISSION_XR = 3;
+  public static final int PERMISSION_AUTOPLAY_INAUDIBLE = 4;
+  public static final int PERMISSION_AUTOPLAY_AUDIBLE = 5;
+  public static final int PERMISSION_MEDIA_KEY_SYSTEM_ACCESS = 6;
+  public static final int PERMISSION_TRACKING = 7;
+  public static final int PERMISSION_STORAGE_ACCESS = 8;
+  public static final int PERMISSION_LOCAL_DEVICE_ACCESS = 9;
+  public static final int PERMISSION_LOCAL_NETWORK_ACCESS = 10;
+  public default void onAndroidPermissionsRequest(org.mozilla.geckoview.GeckoSession, java.lang.String[], org.mozilla.geckoview.GeckoSession$PermissionDelegate$Callback);
+  public default org.mozilla.geckoview.GeckoResult<java.lang.Integer> onContentPermissionRequest(org.mozilla.geckoview.GeckoSession, org.mozilla.geckoview.GeckoSession$PermissionDelegate$ContentPermission);
+  public default void onMediaPermissionRequest(org.mozilla.geckoview.GeckoSession, java.lang.String, org.mozilla.geckoview.GeckoSession$PermissionDelegate$MediaSource[], org.mozilla.geckoview.GeckoSession$PermissionDelegate$MediaSource[], org.mozilla.geckoview.GeckoSession$PermissionDelegate$MediaCallback);
+}
+Compiled from "WebRequestError.java"
+public class org.mozilla.geckoview.WebRequestError extends java.lang.Exception {
+  public static final int ERROR_CATEGORY_UNKNOWN = 1;
+  public static final int ERROR_CATEGORY_SECURITY = 2;
+  public static final int ERROR_CATEGORY_NETWORK = 3;
+  public static final int ERROR_CATEGORY_CONTENT = 4;
+  public static final int ERROR_CATEGORY_URI = 5;
+  public static final int ERROR_CATEGORY_PROXY = 6;
+  public static final int ERROR_CATEGORY_SAFEBROWSING = 7;
+  public static final int ERROR_UNKNOWN = 17;
+  public static final int ERROR_SECURITY_SSL = 34;
+  public static final int ERROR_SECURITY_BAD_CERT = 50;
+  public static final int ERROR_NET_INTERRUPT = 35;
+  public static final int ERROR_NET_TIMEOUT = 51;
+  public static final int ERROR_CONNECTION_REFUSED = 67;
+  public static final int ERROR_UNKNOWN_SOCKET_TYPE = 83;
+  public static final int ERROR_REDIRECT_LOOP = 99;
+  public static final int ERROR_OFFLINE = 115;
+  public static final int ERROR_PORT_BLOCKED = 131;
+  public static final int ERROR_NET_RESET = 147;
+  public static final int ERROR_LOCAL_NETWORK_ACCESS_DENIED = 195;
+  public static final int ERROR_HTTPS_ONLY = 163;
+  public static final int ERROR_BAD_HSTS_CERT = 179;
+  public static final int ERROR_UNSAFE_CONTENT_TYPE = 36;
+  public static final int ERROR_CORRUPTED_CONTENT = 52;
+  public static final int ERROR_CONTENT_CRASHED = 68;
+  public static final int ERROR_INVALID_CONTENT_ENCODING = 84;
+  public static final int ERROR_UNKNOWN_HOST = 37;
+  public static final int ERROR_MALFORMED_URI = 53;
+  public static final int ERROR_UNKNOWN_PROTOCOL = 69;
+  public static final int ERROR_FILE_NOT_FOUND = 85;
+  public static final int ERROR_FILE_ACCESS_DENIED = 101;
+  public static final int ERROR_DATA_URI_TOO_LONG = 117;
+  public static final int ERROR_PROXY_CONNECTION_REFUSED = 38;
+  public static final int ERROR_UNKNOWN_PROXY_HOST = 54;
+  public static final int ERROR_SAFEBROWSING_MALWARE_URI = 39;
+  public static final int ERROR_SAFEBROWSING_UNWANTED_URI = 55;
+  public static final int ERROR_SAFEBROWSING_HARMFUL_URI = 71;
+  public static final int ERROR_SAFEBROWSING_PHISHING_URI = 87;
+  public static final int ERROR_HARMFULADDON_URI = 103;
+  public final int code;
+  public final int category;
+  public final java.security.cert.X509Certificate certificate;
+  public org.mozilla.geckoview.WebRequestError(int, int);
+  public org.mozilla.geckoview.WebRequestError(int, int, java.security.cert.X509Certificate);
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+}
+Compiled from "StorageController.java"
+public class org.mozilla.geckoview.StorageController$ClearFlags {
+  public static final long COOKIES = 1l;
+  public static final long NETWORK_CACHE = 2l;
+  public static final long IMAGE_CACHE = 4l;
+  public static final long DOM_STORAGES = 16l;
+  public static final long AUTH_SESSIONS = 32l;
+  public static final long PERMISSIONS = 64l;
+  public static final long ALL_CACHES = 6l;
+  public static final long SITE_SETTINGS = 192l;
+  public static final long SITE_DATA = 471l;
+  public static final long ALL = 512l;
+  public org.mozilla.geckoview.StorageController$ClearFlags();
+}
+Compiled from "TranslationsController.java"
+public class org.mozilla.geckoview.TranslationsController$SessionTranslation {
+  public org.mozilla.geckoview.TranslationsController$SessionTranslation(org.mozilla.geckoview.GeckoSession);
+  public org.mozilla.geckoview.TranslationsController$SessionTranslation$Handler getHandler();
+  public org.mozilla.geckoview.GeckoResult<java.lang.Void> translate(java.lang.String, java.lang.String, org.mozilla.geckoview.TranslationsController$SessionTranslation$TranslationOptions);
+  public org.mozilla.geckoview.GeckoResult<java.lang.Void> translate(org.mozilla.geckoview.TranslationsController$SessionTranslation$TranslationPair, org.mozilla.geckoview.TranslationsController$SessionTranslation$TranslationOptions);
+  public org.mozilla.geckoview.GeckoResult<java.lang.Void> restoreOriginalPage();
+  public org.mozilla.geckoview.GeckoResult<java.lang.Boolean> getNeverTranslateSiteSetting();
+  public org.mozilla.geckoview.GeckoResult<java.lang.Void> setNeverTranslateSiteSetting(java.lang.Boolean);
+}
+Compiled from "WebExtensionController.java"
+public class org.mozilla.geckoview.WebExtensionController {
+  public static final java.lang.String INSTALLATION_METHOD_MANAGER = "manager";
+  public static final java.lang.String INSTALLATION_METHOD_FROM_FILE = "install-from-file";
+  public static final java.lang.String INSTALLATION_METHOD_ONBOARDING = "onboarding";
+  public static final java.lang.String INSTALLATION_METHOD_RTAMO = "rtamo";
+  public org.mozilla.geckoview.WebExtensionController$PromptDelegate getPromptDelegate();
+  public void setPromptDelegate(org.mozilla.geckoview.WebExtensionController$PromptDelegate);
+  public void setDebuggerDelegate(org.mozilla.geckoview.WebExtensionController$DebuggerDelegate);
+  public void setAddonManagerDelegate(org.mozilla.geckoview.WebExtensionController$AddonManagerDelegate);
+  public void setExtensionProcessDelegate(org.mozilla.geckoview.WebExtensionController$ExtensionProcessDelegate);
+  public void enableExtensionProcessSpawning();
+  public void disableExtensionProcessSpawning();
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> install(java.lang.String, java.lang.String);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> install(java.lang.String);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> setAllowedInPrivateBrowsing(org.mozilla.geckoview.WebExtension, boolean);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> addOptionalPermissions(java.lang.String, java.lang.String[], java.lang.String[], java.lang.String[]);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> removeOptionalPermissions(java.lang.String, java.lang.String[], java.lang.String[], java.lang.String[]);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> installBuiltIn(java.lang.String);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> ensureBuiltIn(java.lang.String, java.lang.String);
+  public org.mozilla.geckoview.GeckoResult<java.lang.Void> uninstall(org.mozilla.geckoview.WebExtension);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> enable(org.mozilla.geckoview.WebExtension, int);
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> disable(org.mozilla.geckoview.WebExtension, int);
+  public org.mozilla.geckoview.GeckoResult<java.util.List<org.mozilla.geckoview.WebExtension>> list();
+  public org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.WebExtension> update(org.mozilla.geckoview.WebExtension);
+  public void setTabActive(org.mozilla.geckoview.GeckoSession, boolean);
+  public org.mozilla.geckoview.WebExtension$Download createDownload(int);
+}
+Compiled from "Autocomplete.java"
+public class org.mozilla.geckoview.Autocomplete$LoginEntry {
+  public final java.lang.String guid;
+  public final java.lang.String origin;
+  public final java.lang.String formActionOrigin;
+  public final java.lang.String httpRealm;
+  public final java.lang.String username;
+  public final java.lang.String password;
+  public java.lang.String toString();
+}
+Compiled from "GeckoSession.java"
+public class org.mozilla.geckoview.GeckoSession$PromptDelegate$AutocompleteRequest<T extends org.mozilla.geckoview.Autocomplete$Option<?>> extends org.mozilla.geckoview.GeckoSession$PromptDelegate$BasePrompt {
+  public final T[] options;
+  public org.mozilla.geckoview.GeckoSession$PromptDelegate$PromptResponse confirm(org.mozilla.geckoview.Autocomplete$Option<?>);
+  public org.mozilla.geckoview.GeckoSession$PromptDelegate$PromptResponse dismiss();
+}
