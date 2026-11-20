@@ -1,0 +1,40 @@
+# Outil : relève l'API publique exacte de la dernière GeckoView (javap) et la range sur la branche outils-resultats.
+name: API GeckoView
+on:
+  push:
+    branches: [outils]
+permissions:
+  contents: write
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: Relever
+        run: |
+          set -x
+          mkdir -p out w && cd w
+          META=https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview-arm64-v8a/maven-metadata.xml
+          VER=$(curl -fsSL "$META" | sed -n 's:.*<release>\(.*\)</release>.*:\1:p' | head -1)
+          echo "$VER" > ../out/version.txt
+          curl -fsSL -o g.aar "https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview-arm64-v8a/$VER/geckoview-arm64-v8a-$VER.aar"
+          curl -fsSL -o g.pom "https://maven.mozilla.org/maven2/org/mozilla/geckoview/geckoview-arm64-v8a/$VER/geckoview-arm64-v8a-$VER.pom" && cp g.pom ../out/
+          unzip -q -o g.aar classes.jar AndroidManifest.xml && cp AndroidManifest.xml ../out/
+          unzip -q -o classes.jar 'org/mozilla/geckoview/*' -d cls
+          ls cls/org/mozilla/geckoview | sed 's/\.class$//' > ../out/classes.txt
+          for c in $(ls cls/org/mozilla/geckoview/*.class); do
+            n=$(basename "$c" .class)
+            javap -public -cp classes.jar "org.mozilla.geckoview.$n" >> ../out/api.txt 2>/dev/null || true
+          done
+          # Constantes
+          for n in 'GeckoSession$PermissionDelegate' 'WebRequestError' 'StorageController$ClearFlags' 'TranslationsController$SessionTranslation' 'WebExtensionController' 'Autocomplete$LoginEntry' 'GeckoSession$PromptDelegate$AutocompleteRequest'; do
+            javap -public -constants -cp classes.jar "org.mozilla.geckoview.$n" >> ../out/constants.txt 2>/dev/null || true
+          done
+          unzip -q -o g.aar 'assets/omni.ja' 2>/dev/null && unzip -l assets/omni.ja | grep -iE 'webcompat|translations|reader|Readability' | head -80 > ../out/omni.txt || true
+          wc -l ../out/*
+      - name: Publier
+        run: |
+          cd out && git init -q -b outils-resultats && git config user.name ci && git config user.email ci@airnavig.invalid
+          git add -A && git commit -qm "API GeckoView $(cat version.txt)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" outils-resultats
