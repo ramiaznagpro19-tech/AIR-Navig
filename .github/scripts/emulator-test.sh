@@ -22,30 +22,7 @@ A logcat -c
 A shell am start -n app.airnavig/.MainActivity
 sleep 35
 shot 01-demarrage
-V "https://fr.wikipedia.org/wiki/Paris"; sleep 30
-shot 02-wikipedia
-T "show:tabs"; sleep 6
-shot 03-onglets
-T "collapse"; sleep 2
-T "reader"; sleep 12
-shot 04-lecture-wikipedia
-T "reader"; sleep 8
-V "https://developer.mozilla.org/fr/docs/Web/HTML"; sleep 25
-T "reader"; sleep 12
-shot 05-lecture-mdn
-T "reader"; sleep 6
-T "show:menu"; sleep 4
-shot 06-menu
-T "show:trlang"; sleep 3
-shot 07-langues
-T "collapse"; sleep 2
-V "https://de.wikipedia.org/wiki/Berlin"; sleep 30
-shot 08-allemand
-T "translate:do:fr"; sleep 60
-shot 09-traduit-fr
-T "translate:do:ja"; sleep 30
-shot 10-traduit-japonais
-for x in duckduckgo-for-firefox ublock-origin darkreader; do
+for x in ublock-origin duckduckgo-for-firefox darkreader; do
   T "install:https://addons.mozilla.org/firefox/downloads/latest/$x/latest.xpi"; sleep 25
   tap_text "Ajouter" || tap_text "AJOUTER"; sleep 12
   tap_text "Oui"; sleep 2
@@ -62,11 +39,6 @@ T "show:addons"; sleep 6
 shot 15-extensions
 T "show:engines"; sleep 4
 shot 16-moteurs
-T "collapse"; sleep 2
-T "type:localhost:8080"; sleep 8
-shot 17-localhost
-T "show:set_tr"; sleep 3
-shot 18-reglages-traduction
 timeout 60 adb logcat -d > out/logcat-complet.txt
 grep -E "GeckoConsole|AIRNavig|AndroidRuntime|FATAL|Translations|GeckoView|WebExtension|addon" out/logcat-complet.txt | grep -v "MozAfterPaint\|No impl for message" | tail -3000 > out/logcat-gecko.txt
 exit 0
