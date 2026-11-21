@@ -847,10 +847,11 @@ function addonEngines(list){
   Object.keys(ENGINES).filter(k=>k.startsWith('ext:')).forEach(k=>{delete ENGINES[k];delete LOGOS[k]});
   (list||[]).forEach(e=>{if(!e||!e.id||!e.url||!/^https:\/\//.test(e.url))return;const k='ext:'+e.id;
     let origin='';try{origin=new URL(e.url.replace('{searchTerms}','x')).origin}catch{return}
-    ENGINES[k]={name:e.name||'Extension',desc:'Ajouté par une extension',bang:(e.keyword||'').replace(/^[@!]/,'').toLowerCase()||k.slice(4,8),home:origin+'/',
+    const bang=(e.keyword||'').replace(/^[@!]/,'').toLowerCase().replace(/[^a-z0-9]/g,'')||(e.name||'ext').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,4)||'ext';
+    ENGINES[k]={name:e.name||'Extension',desc:'Ajouté par une extension',bang,home:origin+'/',
       search:q=>e.url.split('{searchTerms}').join(encodeURIComponent(q)),
       match:u=>{try{const t=new URL(e.url.replace('{searchTerms}','__q__'));if(u.origin!==t.origin||u.pathname!==t.pathname)return null;for(const [p,v] of t.searchParams)if(v==='__q__')return u.searchParams.get(p);}catch{}return null}};
-    LOGOS[k]=e.icon&&/^(https:|data:image\/)/.test(e.icon)?e.icon:(e.addonIcon||LOGOS.duckduckgo)});
+    LOGOS[k]=e.icon&&/^(https:|data:image\/)/.test(e.icon)?e.icon:(e.addonIcon||fav(origin))});
   if(!ENGINES[set.engine]){set.engine='google';saveSet()}
 }
 addonEngines(S.get('extEngines',[]));

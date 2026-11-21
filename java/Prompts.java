@@ -61,10 +61,11 @@ final class Prompts implements PromptDelegate {
         if (gone()) return GeckoResult.fromValue(prompt.dismiss());
         final GeckoResult<PromptResponse> res = new GeckoResult<>();
         final boolean[] done = {false};
+        final boolean mine = act.ownsUi(session);
         new AlertDialog.Builder(act)
-                .setTitle(prompt.title)
+                .setTitle(mine ? "AIR Navig" : prompt.title)
                 .setMessage(clip(prompt.message))
-                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                .setPositiveButton(mine ? "Oui" : act.getString(android.R.string.ok), (d, w) -> {
                     done[0] = true;
                     res.complete(prompt.confirm(ButtonPrompt.Type.POSITIVE));
                 })

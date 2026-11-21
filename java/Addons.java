@@ -155,6 +155,12 @@ final class Addons {
                 case "downloads": out.add("gérer tes téléchargements"); break;
                 case "cookies": out.add("lire et modifier les cookies"); break;
                 case "webRequest": case "webRequestBlocking": if (!out.contains("bloquer ou modifier les requêtes réseau")) out.add("bloquer ou modifier les requêtes réseau"); break;
+                case "webNavigation": out.add("suivre les pages que tu visites"); break;
+                case "declarativeNetRequest": case "declarativeNetRequestWithHostAccess": if (!out.contains("bloquer ou modifier les requêtes réseau")) out.add("bloquer ou modifier les requêtes réseau"); break;
+                case "notifications": out.add("afficher des notifications"); break;
+                case "search": out.add("lancer des recherches"); break;
+                case "management": out.add("gérer tes autres extensions"); break;
+                case "browsingData": out.add("effacer tes données de navigation"); break;
                 case "clipboardRead": out.add("lire le presse-papiers"); break;
                 case "clipboardWrite": out.add("écrire dans le presse-papiers"); break;
                 case "geolocation": out.add("connaître ta position"); break;
@@ -205,7 +211,12 @@ final class Addons {
         e.setActionDelegate(new WebExtension.ActionDelegate() {
             @Override
             public void onBrowserAction(@NonNull WebExtension ext, @Nullable GeckoSession s, @NonNull WebExtension.Action action) {
-                if (s == null) actions.put(ext.id, action);
+                if (s == null) {
+                    boolean fresh = !actions.containsKey(ext.id);
+                    actions.put(ext.id, action);
+                    // Nouveau bouton : la barre d'adresse est mise à jour.
+                    if (fresh && front() != null) pushList(front());
+                }
             }
 
             @Override
