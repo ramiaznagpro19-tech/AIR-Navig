@@ -609,8 +609,10 @@ final class Addons {
             case "action": {
                 WebExtension.Action act = actions.get(e.id);
                 Info inf = info(a, e.id);
-                if (act != null) act.click();
-                else if (inf.popup != null) openPopupPage(a, e, inf.popup);
+                // La fenêtre déclarée par l'extension est ouverte par AIR Navig lui-même (fiable) ;
+                // le clic transmis à Gecko ne sert que pour les boutons sans fenêtre.
+                if (inf.popup != null) openPopupPage(a, e, inf.popup);
+                else if (act != null) act.click();
                 else if (e.metaData.optionsPageUrl != null && !e.metaData.optionsPageUrl.isEmpty()) openOptions(e);
                 else a.notice("« " + name(e) + " » n'a pas de fenêtre : elle agit directement sur les pages");
                 break;
