@@ -252,7 +252,11 @@ html.pos-top #trBar{order:6;border-bottom:0;border-top:1px solid var(--line)}
 html.pos-right #trBar{display:none!important}
 
 /* Boutons des extensions et du mode lecture dans la barre d'adresse */
-#extBtns{display:flex;align-items:center;gap:2px;flex:none}
+#extBtns{display:flex;align-items:center;gap:2px;flex:0 1 auto;min-width:0;max-width:42%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+#extBtns::-webkit-scrollbar{display:none}
+#extBtns .xb{flex:none;scroll-snap-align:start}
+#extBtns.many{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+html.pos-right #extBtns{max-width:none;max-height:30vh;overflow-x:hidden;overflow-y:auto}
 #extBtns:empty{display:none}
 #extBtns .xb{width:32px;height:30px;display:grid;place-items:center;border-radius:calc(15px*var(--rs,1));color:var(--muted)}
 #extBtns .xb.on{color:var(--accent);background:rgba(139,124,255,.14)}

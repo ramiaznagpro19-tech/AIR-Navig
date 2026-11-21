@@ -120,7 +120,7 @@ final class Addons {
             @Override
             public void onUninstalled(@NonNull WebExtension ext) {
                 exts.remove(ext.id);
-                searchCache.remove(ext.id);
+                infoCache.remove(ext.id);
                 actions.remove(ext.id);
                 MainActivity a = front();
                 if (a != null) pushList(a);
@@ -336,6 +336,8 @@ final class Addons {
                 attach(e);
                 try {
                     WebExtension.Action act = actions.get(e.id);
+                    Info inf = info(a, e.id);
+                    String btnIcon = inf.icon != null ? inf.icon : (icons.containsKey(e.id) ? icons.get(e.id) : "");
                     arr.put(new JSONObject()
                             .put("id", e.id)
                             .put("name", name(e))
@@ -343,9 +345,10 @@ final class Addons {
                             .put("desc", e.metaData.description == null ? "" : e.metaData.description)
                             .put("on", e.metaData.enabled)
                             .put("options", e.metaData.optionsPageUrl != null && !e.metaData.optionsPageUrl.isEmpty())
-                            .put("action", act != null ? (act.title == null || act.title.isEmpty() ? name(e) : act.title) : "")
+                            .put("action", act != null || inf.popup != null
+                                    ? (act != null && act.title != null && !act.title.isEmpty() ? act.title : inf.title != null ? inf.title : name(e)) : "")
                             .put("priv", e.metaData.allowedInPrivateBrowsing)
-                            .put("icon", icons.containsKey(e.id) ? icons.get(e.id) : "")
+                            .put("icon", btnIcon)
                             .put("search", searchProvider(a, e.id)));
                 } catch (Exception ignored) {
                 }
@@ -356,7 +359,6 @@ final class Addons {
 
     /* ======================= Moteurs de recherche fournis par les extensions ======================= */
 
-    private static final Map<String, JSONObject> searchCache = new HashMap<>();
 
     /** Fichier .xpi installé d'une extension, dans le profil Gecko de l'appli. */
     @Nullable
@@ -406,14 +408,69 @@ final class Addons {
         return v;
     }
 
-    /**
-     * Moteur de recherche déclaré par l'extension (manifest : chrome_settings_overrides.search_provider),
-     * pour l'ajouter aux moteurs d'AIR Navig. null si l'extension n'en fournit pas.
-     */
+    /** Ce qu'AIR Navig lit dans le manifeste d'une extension installée. */
+    static final class Info {
+        JSONObject search;
+        String popup;
+        String title;
+        String icon;
+    }
+
+    private static final Map<String, Info> infoCache = new HashMap<>();
+
+    /** Fichier de l'extension → image en data: (png, svg, jpg, webp). */
     @Nullable
-    static JSONObject searchProvider(android.content.Context c, String id) {
-        if (searchCache.containsKey(id)) return searchCache.get(id);
-        JSONObject out = null;
+    private static String imageData(java.util.zip.ZipFile z, String path) {
+        if (path == null || path.isEmpty()) return null;
+        if (path.startsWith("/")) path = path.substring(1);
+        try {
+            java.util.zip.ZipEntry en = z.getEntry(path);
+            if (en == null || en.getSize() > 300_000) return null;
+            try (java.io.InputStream in = z.getInputStream(en)) {
+                java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                byte[] b = new byte[16384];
+                int n;
+                while ((n = in.read(b)) > 0) bo.write(b, 0, n);
+                String low = path.toLowerCase(java.util.Locale.ROOT);
+                String mime = low.endsWith(".svg") ? "image/svg+xml" : low.endsWith(".jpg") || low.endsWith(".jpeg") ? "image/jpeg"
+                        : low.endsWith(".webp") ? "image/webp" : "image/png";
+                return "data:" + mime + ";base64," + Base64.encodeToString(bo.toByteArray(), Base64.NO_WRAP);
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Icône la plus proche de 48 px dans un champ d'icônes (texte ou {"16": …, "32": …}). */
+    @Nullable
+    private static String pickIcon(Object icons) {
+        if (icons instanceof String) return (String) icons;
+        if (!(icons instanceof JSONObject)) return null;
+        JSONObject o = (JSONObject) icons;
+        String best = null;
+        int bd = Integer.MAX_VALUE;
+        for (java.util.Iterator<String> it = o.keys(); it.hasNext(); ) {
+            String k = it.next();
+            int sz;
+            try {
+                sz = Integer.parseInt(k);
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            int d = Math.abs(sz - 48) + (sz < 32 ? 40 : 0);
+            if (d < bd) {
+                bd = d;
+                best = o.optString(k, null);
+            }
+        }
+        return best;
+    }
+
+    /** Lit le manifeste de l'extension (moteur de recherche, fenêtre du bouton, logo). */
+    static Info info(android.content.Context c, String id) {
+        Info cached = infoCache.get(id);
+        if (cached != null) return cached;
+        Info in = new Info();
         try {
             java.io.File root = new java.io.File(c.getFilesDir(), "mozilla");
             java.io.File xpi = findXpi(root.exists() ? root : c.getFilesDir(), id + ".xpi", 4);
@@ -422,15 +479,27 @@ final class Addons {
                     String mf = readEntry(z, "manifest.json");
                     if (mf != null) {
                         JSONObject m = new JSONObject(mf.replaceAll("(?m)^\\s*//.*$", ""));
+                        String loc = m.optString("default_locale", null);
+                        // Bouton de l'extension : « action » (MV3), « browser_action » ou « page_action » (MV2)
+                        JSONObject act = m.optJSONObject("action");
+                        if (act == null) act = m.optJSONObject("browser_action");
+                        if (act == null) act = m.optJSONObject("page_action");
+                        if (act != null) {
+                            String pop = act.optString("default_popup", "");
+                            if (!pop.isEmpty() && !pop.contains("..") && !pop.contains("://")) in.popup = pop.startsWith("/") ? pop.substring(1) : pop;
+                            String t = msg(z, loc, act.optString("default_title", ""));
+                            if (!t.isEmpty()) in.title = t;
+                            in.icon = imageData(z, pickIcon(act.opt("default_icon")));
+                        }
+                        if (in.icon == null) in.icon = imageData(z, pickIcon(m.opt("icons")));
                         JSONObject o = m.optJSONObject("chrome_settings_overrides");
                         JSONObject sp = o == null ? null : o.optJSONObject("search_provider");
-                        String loc = m.optString("default_locale", null);
                         if (sp != null) {
                             String url = msg(z, loc, sp.optString("search_url", ""));
                             String params = msg(z, loc, sp.optString("search_url_get_params", ""));
                             if (!params.isEmpty()) url += (url.contains("?") ? "&" : "?") + params;
                             if (url.startsWith("https://") && url.contains("{searchTerms}")) {
-                                out = new JSONObject()
+                                in.search = new JSONObject()
                                         .put("name", msg(z, loc, sp.optString("name", m.optString("name", id))))
                                         .put("url", url)
                                         .put("keyword", msg(z, loc, sp.optString("keyword", "")))
@@ -440,12 +509,61 @@ final class Addons {
                         }
                     }
                 }
+                infoCache.put(id, in);
             }
         } catch (Exception e) {
-            Log.w(TAG, "Moteur de l'extension " + id, e);
+            Log.w(TAG, "Manifeste de l'extension " + id, e);
         }
-        if (out != null) searchCache.put(id, out);
-        return out;
+        return in;
+    }
+
+    @Nullable
+    static JSONObject searchProvider(android.content.Context c, String id) {
+        return info(c, id).search;
+    }
+
+    /** Ouvre la fenêtre de l'extension (son popup) dans une boîte de dialogue, comme dans Firefox. */
+    static void openPopupPage(final MainActivity a, WebExtension e, String path) {
+        if (rt == null || a.isFinishing()) return;
+        String base = e.metaData.baseUrl;
+        if (base == null) return;
+        if (!base.endsWith("/")) base += "/";
+        final GeckoSession s = new GeckoSession();
+        final Dialog dlg = new Dialog(a);
+        dlg.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        final GeckoView v = new GeckoView(a);
+        FrameLayout box = new FrameLayout(a);
+        int h = (int) (a.getResources().getDisplayMetrics().heightPixels * 0.7);
+        box.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h));
+        dlg.setContentView(box);
+        dlg.setOnDismissListener(d -> {
+            try {
+                v.releaseSession();
+                s.close();
+            } catch (Throwable ignored) {
+            }
+        });
+        s.setContentDelegate(new GeckoSession.ContentDelegate() {
+            @Override
+            public void onCloseRequest(@NonNull GeckoSession session) {
+                dlg.dismiss();
+            }
+        });
+        s.setNavigationDelegate(new GeckoSession.NavigationDelegate() {
+            @Nullable
+            @Override
+            public GeckoResult<GeckoSession> onNewSession(@NonNull GeckoSession session, @NonNull String uri) {
+                // Lien ouvert depuis la fenêtre de l'extension : nouvel onglet, la fenêtre se ferme.
+                ui.post(dlg::dismiss);
+                return GeckoResult.fromValue(a.newTabSession(uri, true));
+            }
+        });
+        s.setPromptDelegate(a.prompts());
+        s.open(rt);
+        v.setSession(s);
+        s.loadUri(base + path);
+        dlg.show();
+        if (dlg.getWindow() != null) dlg.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     /** Commande de l'interface : {op, id}. */
@@ -490,8 +608,11 @@ final class Addons {
                 break;
             case "action": {
                 WebExtension.Action act = actions.get(e.id);
+                Info inf = info(a, e.id);
                 if (act != null) act.click();
-                else a.notice("Cette extension n'a pas de bouton");
+                else if (inf.popup != null) openPopupPage(a, e, inf.popup);
+                else if (e.metaData.optionsPageUrl != null && !e.metaData.optionsPageUrl.isEmpty()) openOptions(e);
+                else a.notice("« " + name(e) + " » n'a pas de fenêtre : elle agit directement sur les pages");
                 break;
             }
             default:

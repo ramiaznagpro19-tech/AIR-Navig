@@ -45,19 +45,28 @@ T "translate:do:fr"; sleep 60
 shot 09-traduit-fr
 T "translate:do:ja"; sleep 30
 shot 10-traduit-japonais
-T "install:https://addons.mozilla.org/firefox/downloads/latest/duckduckgo-for-firefox/latest.xpi"; sleep 25
-shot 11-extension-demande
-tap_text "Ajouter" || tap_text "AJOUTER"; sleep 15
-shot 12-extension-ajoutee
+for x in duckduckgo-for-firefox ublock-origin darkreader; do
+  T "install:https://addons.mozilla.org/firefox/downloads/latest/$x/latest.xpi"; sleep 25
+  tap_text "Ajouter" || tap_text "AJOUTER"; sleep 12
+  tap_text "Oui"; sleep 2
+done
+shot 11-extensions-installees
+V "https://fr.wikipedia.org/wiki/Lyon"; sleep 20
+shot 12-logos-barre
+T "tapext:2"; sleep 10
+shot 13-fenetre-extension
+A shell input keyevent KEYCODE_BACK; sleep 3
+A shell input swipe 600 1530 300 1530 300; sleep 2
+shot 14-logos-defiles
 T "show:addons"; sleep 6
-shot 13-extensions
+shot 15-extensions
 T "show:engines"; sleep 4
-shot 14-moteurs
+shot 16-moteurs
 T "collapse"; sleep 2
 T "type:localhost:8080"; sleep 8
-shot 15-localhost
+shot 17-localhost
 T "show:set_tr"; sleep 3
-shot 16-reglages-traduction
+shot 18-reglages-traduction
 timeout 60 adb logcat -d > out/logcat-complet.txt
 grep -E "GeckoConsole|AIRNavig|AndroidRuntime|FATAL|Translations|GeckoView|WebExtension|addon" out/logcat-complet.txt | grep -v "MozAfterPaint\|No impl for message" | tail -3000 > out/logcat-gecko.txt
 exit 0

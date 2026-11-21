@@ -2355,6 +2355,7 @@ public class MainActivity extends Activity {
         else if (t.equals("collapse")) toJs("collapse()");
         else if (t.startsWith("type:")) toJs("go(" + JSONObject.quote(t.substring(5)) + ")");
         else if (t.startsWith("install:")) Addons.install(t.substring(8));
+        else if (t.startsWith("tapext:")) toJs("(document.querySelectorAll('#extBtns .xb')[" + Integer.parseInt(t.substring(7)) + "]||{click(){}}).click()");
         else {
             int i = t.indexOf(':');
             runCmd(i < 0 ? t : t.substring(0, i), i < 0 ? "" : t.substring(i + 1));

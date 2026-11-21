@@ -858,8 +858,11 @@ addonEngines(S.get('extEngines',[]));
 function drawExtBtns(){
   const box=$('#extBtns');if(!box)return;box.innerHTML='';
   if(READING||READABLE){const r=document.createElement('button');r.className='xb'+(READING?' on':'');r.setAttribute('aria-label','Mode lecture');r.innerHTML=ICON.book;r.onclick=e=>{e.stopPropagation();A('reader')};box.append(r)}
-  ADDONS.filter(x=>x.on&&x.action).slice(0,3).forEach(x=>{const b=document.createElement('button');b.className='xb';b.setAttribute('aria-label',x.action);
-    b.innerHTML=x.icon?'<img src="'+esc(x.icon)+'" alt="">':ICON.puzzle;b.onclick=e=>{e.stopPropagation();A('addons',JSON.stringify({op:'action',id:x.id}))};box.append(b)});
+  // Logo de chaque extension active : appui = sa fenêtre (ou ses options). La rangée défile s'il n'y a pas la place.
+  ADDONS.filter(x=>x.on).forEach(x=>{const b=document.createElement('button');b.className='xb';b.setAttribute('aria-label',x.action||x.name);b.title=x.action||x.name;
+    b.innerHTML=x.icon?'<img src="'+esc(x.icon)+'" alt="">':ICON.puzzle;
+    b.onclick=e=>{e.stopPropagation();if(x.action||x.options){collapse();A('addons',JSON.stringify({op:x.action?'action':'options',id:x.id}))}else show('addons')};box.append(b)});
+  box.classList.toggle('many',box.children.length>2);
 }
 function onAddons(js){try{ADDONS=JSON.parse(js)||[]}catch{ADDONS=[]}
   const known=S.get('extEngines',[]);const eng=ADDONS.filter(x=>x.on&&x.search).map(x=>Object.assign({id:x.id,addonIcon:x.icon},x.search));
