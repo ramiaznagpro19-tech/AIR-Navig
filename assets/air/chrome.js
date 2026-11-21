@@ -272,7 +272,7 @@ let noticeT; function notice(msg){if(set.pos==='right'){A('toast',msg);return}co
 
 /* ===== Appels du code Android ===== */
 function onNav(url,back,fwd,loading){
-  if(loading){READING=false;READABLE=false}
+  if(loading&&(READING||READABLE)){READING=false;READABLE=false;drawExtBtns()}
   if(url!==st.url&&loading){st.title='';try{if(!$('#trBar').hidden){$('#trBar').hidden=true;requestAnimationFrame(reportHeight)}}catch(e){}}
   st.back=back; st.fwd=fwd; st.loading=loading;
   const h=(isInternal(url)||isLocalFile(url))?'':host(url);
@@ -361,14 +361,14 @@ function addHistory(url){if(INCOG)return;if(history.length&&history[history.leng
 
 /* ===== Écrans ===== */
 let curSec=null, prevSec=null;
-const TITLES={perms:'Autorisations des sites',search:'Rechercher',engines:'Moteur de recherche',menu:'Menu',shield:'Bouclier',why:'Pourquoi ce site est isolé',tabs:'Onglets',bookmarks:'Favoris',history:'Historique',notes:'Notes du site',time:'Temps passé',settings:'Réglages',about:'À propos d’AIR Navig',set_prot:'Anti-pubs et protections',set_look:'Thèmes et apparence',set_bar:'Barre et boutons',set_home:'Page d’accueil',set_sync:'Synchronisation',set_tr:'Traduction des pages',addons:'Extensions'};
+const TITLES={perms:'Autorisations des sites',search:'Rechercher',engines:'Moteur de recherche',menu:'Menu',shield:'Bouclier',why:'Pourquoi ce site est isolé',tabs:'Onglets',bookmarks:'Favoris',history:'Historique',notes:'Notes du site',time:'Temps passé',settings:'Réglages',about:'À propos d’AIR Navig',set_prot:'Anti-pubs et protections',set_look:'Thèmes et apparence',set_bar:'Barre et boutons',set_home:'Page d’accueil',trlang:'Traduire la page',set_tr:'Traduction des pages',addons:'Extensions'};
 function show(s){
   prevSec=curSec&&curSec!==s?curSec:prevSec; curSec=s;
   A('bar','0'); lastBar=0;
   $('#full').hidden=false; bar.style.display='none';
   $('#fTitle').textContent=(INCOG?'Privé · ':'')+TITLES[s];
   $$('.sec').forEach(x=>x.classList.toggle('on',x.dataset.s===s));
-  ({perms:drawPerms,search:drawSearch,engines:drawEngines,menu:drawMenu,shield:drawShield,why:drawWhy,tabs:drawTabs,bookmarks:drawBookmarks,history:drawHistory,notes:drawNotes,time:drawTime,settings:drawSettings,about:drawAbout,set_prot:drawProt,set_look:drawLook,set_bar:drawBarSet,set_home:drawHomeSet,set_sync:drawSync,set_tr:drawTr,addons:drawAddons}[s]||(()=>{}))();
+  ({perms:drawPerms,search:drawSearch,engines:drawEngines,menu:drawMenu,shield:drawShield,why:drawWhy,tabs:drawTabs,bookmarks:drawBookmarks,history:drawHistory,notes:drawNotes,time:drawTime,settings:drawSettings,about:drawAbout,set_prot:drawProt,set_look:drawLook,set_bar:drawBarSet,set_home:drawHomeSet,trlang:drawTrLang,set_tr:drawTr,addons:drawAddons}[s]||(()=>{}))();
   $('.fbody').scrollTop=0;
 }
 function collapse(){ $('#full').hidden=true; bar.style.display=''; curSec=null; prevSec=null; document.activeElement&&document.activeElement.blur(); requestAnimationFrame(reportHeight); }
@@ -436,7 +436,7 @@ function drawMenu(){
     ['box','Bac à sable',false,()=>openSandbox(st.url)],
     ['file','Fichier HTML',false,()=>{collapse();A('openfile')}],
     ['book',READING?'Quitter la lecture':'Mode lecture',READING||READABLE,()=>{collapse();A('reader')}],
-    ['tr',TR.on?'Page d’origine':'Traduire',TR.on,()=>{collapse();A('translate','toggle')}],
+    ['tr',TR.on?'Page d’origine':'Traduire',TR.on,()=>{if(TR.on){collapse();A('translate','restore')}else show('trlang')}],
     ['pip','Vidéo en incrustation',false,()=>{collapse();A('pip')}],
     ['lockk','Mots de passe',false,()=>{collapse();A('passwords')}],
     ['puzzle','Extensions',false,()=>show('addons')],
@@ -446,7 +446,7 @@ function drawMenu(){
   if(set.pos==='top') T.unshift(['back','Précédent',false,()=>{collapse();if(st.back)A('back');else A('go',homeUrl())}],['fwd','Suivant',false,()=>{collapse();A('fwd')}]);
   const g=$('#tools');g.innerHTML='';
   T.forEach(([ic,label,on,fn])=>{const b=document.createElement('button');b.className='tool'+(on?' on':'');b.innerHTML=ICON[ic]+'<span>'+label+'</span>';b.onclick=fn;g.append(b)});
-  const L=[['shield','Bouclier : qui a voulu faire quoi',K.blocked,'shield'],['tabs','Onglets',tabs.length,'tabs'],['star','Favoris',bookmarks.length,'bookmarks'],['hist','Historique','', 'history'],['note','Notes de ce site',Object.keys(notes).length,'notes'],['clock','Temps passé aujourd’hui','','time'],['sync','Synchronisation',SYNC.on?'✓':'','set_sync'],['puzzle','Extensions','','addons'],['gear','Réglages','','settings'],['shield','À propos · AIR, par Rami','','about']];
+  const L=[['shield','Bouclier : qui a voulu faire quoi',K.blocked,'shield'],['tabs','Onglets',tabs.length,'tabs'],['star','Favoris',bookmarks.length,'bookmarks'],['hist','Historique','', 'history'],['note','Notes de ce site',Object.keys(notes).length,'notes'],['clock','Temps passé aujourd’hui','','time'],['puzzle','Extensions','','addons'],['gear','Réglages','','settings'],['shield','À propos · AIR, par Rami','','about']];
   if(!INCOG)L.unshift(['incog','Nouvel onglet de navigation privée','','__incog']);
   const l=$('#links');l.innerHTML='';
   L.forEach(([ic,label,n,s])=>{const b=document.createElement('button');b.className='row';b.innerHTML=ICON[ic]+'<span class="t"><div>'+label+'</div></span>'+(n!==''?'<span class="badge">'+n+'</span>':'');b.onclick=()=>s==='__incog'?openIncognito():show(s);l.append(b)});
@@ -499,7 +499,7 @@ function drawWhy(){
 $('#isoExit').onclick=()=>{};
 
 /* Onglets : chaque onglet garde sa page (session Gecko) ; aperçu réel ; glisser pour réordonner */
-function switchTo(i,url){READING=false;READABLE=false;try{$('#trBar').hidden=true}catch(e){}cur=Math.max(0,Math.min(i,tabs.length-1));saveTabs();A('tab',JSON.stringify({op:'switch',id:tabs[cur].id,url:url||tabs[cur].url||homeUrl()}));drawBar()}
+function switchTo(i,url){READING=false;READABLE=false;try{drawExtBtns()}catch(e){}try{$('#trBar').hidden=true}catch(e){}cur=Math.max(0,Math.min(i,tabs.length-1));saveTabs();A('tab',JSON.stringify({op:'switch',id:tabs[cur].id,url:url||tabs[cur].url||homeUrl()}));drawBar()}
 function onNewTab(js){let o;try{o=JSON.parse(js)}catch{return}if(!o||!o.id||tabs.some(t=>t.id===o.id))return;
   const at=Math.max(0,tabs.findIndex(t=>t.id===o.opener)); const t={id:o.id,url:o.url||'',title:host(o.url)||'Nouvel onglet',opener:o.opener||''};
   tabs.splice(o.opener?at+1:tabs.length,0,t); if(o.active!==false)cur=tabs.indexOf(t); else if(tabs.indexOf(t)<=cur)cur++;
@@ -516,8 +516,7 @@ function drawTabs(){
     b.innerHTML='<div class="pv"><img class="shot" alt="" '+(THUMBS[t.id]?'src="'+THUMBS[t.id]+'"':'')+'><div class="ph">'+icon+'</div></div><div class="tt">'+icon+'<span class="t">'+esc(t.title||host(t.url)||'Accueil')+'</span></div><button class="c" aria-label="Fermer">'+ICON.x+'</button>';
     l.append(b)});
   drag(l);
-  const rt=S.get('remoteTabs',[]);const box=$('#remoteTabs');if(box){box.innerHTML='';
-    if(rt.length){box.append(head('Sur tes autres appareils'));rt.forEach(d=>{const c=card();c.append(el('div','set','<span class="t"><b>'+esc(d.name||'Appareil')+'</b><small>'+(d.t?'synchronisé '+ago(d.t):'')+'</small></span>'));(d.tabs||[]).slice(0,30).forEach(x=>c.append(rowEl(fav(x.url),x.title||host(x.url),host(x.url),()=>openUrl(x.url))));box.append(c)})}}
+
 }
 /* Glisser-déposer : appui long sur un aperçu puis déplacement */
 function drag(list){
@@ -605,9 +604,8 @@ function drawSettings(){
     navRow(ICON.home,'Page d’accueil','Fond, message de bienvenue, éléments affichés',()=>show('set_home')),
     navRow(logoImg(set.engine),'Moteur de recherche',ENGINES[set.engine].name,()=>show('engines')),
     navRow(ICON.key,'Autorisations des sites','Micro, caméra, position, pop-up, téléchargements, fichiers locaux',()=>show('perms')),
-    navRow(ICON.sync,'Synchronisation',SYNC.on?'Activée'+(SYNC.last?' · '+ago(SYNC.last):''):'Favoris, onglets, historique et mots de passe entre tes appareils',()=>show('set_sync')),
     navRow(ICON.lockk,'Mots de passe',(aboutCacheN()||0)+' enregistré(s) · import CSV',()=>A('passwords')),
-    navRow(ICON.tr,'Traduction des pages',{auto:'Automatique',offer:'Proposée',off:'Désactivée'}[set.translate]||'Proposée',()=>show('set_tr')),
+    navRow(ICON.tr,'Traduction des pages',({auto:'Automatique',offer:'Proposée',off:'Désactivée'}[set.translate]||'Proposée')+' · vers '+langLabel(trTarget()).toLowerCase(),()=>show('set_tr')),
     navRow(ICON.puzzle,'Extensions','Extensions Firefox (addons.mozilla.org)',()=>show('addons'))
   );
   const l=$('#setList');l.innerHTML='';
@@ -788,70 +786,86 @@ Object.assign(ICON,{
 });
 const isReader=u=>/^about:reader\?/i.test(u||'');
 let READING=false,READABLE=false;
-function onReaderable(v){READABLE=!!v}
-function onReading(v){READING=!!v}
+function onReaderable(v){READABLE=!!v;drawExtBtns()}
+function onReading(v){READING=!!v;drawExtBtns()}
 const readerSrc=u=>{try{return new URL(u).searchParams.get('url')||''}catch{return ''}};
 function aboutCacheN(){try{return JSON.parse(AIR.about()).passwords||0}catch{return 0}}
 /* Autorisation changée par l'appli (ex. « Activer les fichiers locaux ») */
 function setPerm(k,v){set.perms[k]=!!v;saveSet();sendPerms();if(curSec==='perms')drawPerms()}
 
-/* --- Synchronisation chiffrée --- */
-let SYNC=(()=>{try{return JSON.parse(new URLSearchParams(location.search).get('i')||'{}').sync||{}}catch{return {}}})();
-function onSyncStatus(js){try{SYNC=JSON.parse(js)||{}}catch{}if(curSec==='set_sync')drawSync();if(curSec==='settings')drawSettings()}
-function bmDelete(url){if(INCOG)return;const d=S.get('bmDel',{});d[url]=Date.now();S.set('bmDel',d)}
-/* Fusion avec le fichier distant : favoris (ajouts / suppressions datés), historique, onglets des autres appareils */
-function syncMerge(remoteStr,dev,devName,manual){
-  let R={};try{R=JSON.parse(remoteStr||'{}')||{}}catch{R={}}
-  const now=Date.now(), old=now-120*864e5;
-  const del=Object.assign({},R.bmDel||{});const mine=S.get('bmDel',{});for(const k in mine)del[k]=Math.max(del[k]||0,mine[k]);
-  for(const k in del)if(del[k]<old)delete del[k];
-  const map=new Map();
-  for(const b of [...(Array.isArray(R.bookmarks)?R.bookmarks:[]),...bookmarks]){if(!b||typeof b.url!=='string')continue;const o=map.get(b.url);const t=+b.t||0;if(!o||t>(+o.t||0))map.set(b.url,{url:b.url,title:String(b.title||(o&&o.title)||''),t})}
-  bookmarks=[...map.values()].filter(b=>!(del[b.url]>(b.t||0)));
-  S.set('bookmarks',bookmarks);S.set('bmDel',del);
-  const hm=new Map();for(const h of [...(Array.isArray(R.history)?R.history:[]),...history]){if(h&&typeof h.url==='string'&&h.t)hm.set(h.url+'|'+h.t,{url:h.url,title:String(h.title||''),t:+h.t})}
-  history=[...hm.values()].sort((a,b)=>a.t-b.t).slice(-2000);S.set('history',history);
-  const devices=(R.devices&&typeof R.devices==='object')?Object.assign({},R.devices):{};
-  devices[dev]={name:devName,t:now,tabs:tabs.filter(t=>/^https?:/i.test(t.url||'')).map(t=>({url:t.url,title:t.title||''})).slice(0,100)};
-  for(const k in devices)if(!devices[k]||devices[k].t<now-60*864e5)delete devices[k];
-  S.set('remoteTabs',Object.keys(devices).filter(k=>k!==dev).map(k=>devices[k]).sort((a,b)=>b.t-a.t));
-  if(curSec==='tabs')drawTabs();if(curSec==='bookmarks')drawBookmarks();
-  A('syncput',JSON.stringify({bookmarks,bmDel:del,history,devices,manual:!!manual}));
-}
-function drawSync(){
-  const b=$('#syncBody');b.innerHTML='';
-  const st=SYNC.on?(SYNC.err?'<span style="color:var(--danger)">'+esc(SYNC.err)+'</span>':'Dernière synchro : '+(SYNC.last?ago(SYNC.last):'jamais')):'Désactivée';
-  b.append(el('div','master'+(SYNC.on?'':' off'),'<span class="ic">'+ICON.sync+'</span><span class="t"><b>'+(SYNC.on?'Synchro activée':'Synchro désactivée')+'</b><small>'+st+'</small></span>'));
-  if(INCOG){b.append(el('p','muted small','La synchronisation n’est pas disponible en navigation privée.'));return}
-  b.append(card(
-    el('div','set','<span class="t">Comment ça marche<small>Favoris, onglets ouverts, historique et mots de passe sont rangés dans <b>un seul fichier</b> que tu choisis (Google Drive, Nextcloud, OneDrive…), chiffré par <b>ta phrase secrète</b> (AES-256). Ni AIR, ni Google, ni personne d’autre ne peut le lire. Sur ton autre appareil, choisis le même fichier et la même phrase.</small></span>'),
-    SYNC.on?el('div','set','<span class="t">Fichier<small>'+esc(SYNC.file||'?')+' · cet appareil : '+esc(SYNC.device||'')+'</small></span>'):null));
-  const row=el('div','');row.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin:12px 0';
-  if(SYNC.on){const n=el('button','btn','Synchroniser maintenant');n.onclick=()=>A('sync','now');const g=el('button','btn ghost','Gérer');g.onclick=()=>A('sync','setup');row.append(n,g)}
-  else{const n=el('button','btn','Activer la synchronisation');n.onclick=()=>A('sync','setup');row.append(n)}
-  b.append(row);
-  const rt=S.get('remoteTabs',[]);if(rt.length){b.append(head('Tes autres appareils'));const c=card();rt.forEach(d=>c.append(el('div','set','<span class="t">'+esc(d.name||'Appareil')+'<small>'+(d.tabs||[]).length+' onglet(s) · '+ago(d.t)+'</small></span>')));b.append(c)}
-}
-
+function bmDelete(url){}
 /* --- Traduction (sur le téléphone, moteur Firefox Translations : rien n'est envoyé à un service en ligne) --- */
 if(!['auto','offer','off'].includes(set.translate))set.translate=(()=>{try{return JSON.parse(new URLSearchParams(location.search).get('i')||'{}').translate||'offer'}catch{return 'offer'}})();
-let TR={on:false,can:false,doc:'',docName:''};
+let TR={on:false,can:false,doc:'',docName:'',user:'',userName:''};
+/* 60 langues parmi les plus parlées. Traduites sur le téléphone quand le moteur Firefox les connaît, sinon par Google Traduction. */
+const LANGS=[['fr','Français'],['en','Anglais'],['es','Espagnol'],['de','Allemand'],['it','Italien'],['pt','Portugais'],['nl','Néerlandais'],['ar','Arabe'],['zh-CN','Chinois (simplifié)'],['zh-TW','Chinois (traditionnel)'],
+ ['ja','Japonais'],['ko','Coréen'],['ru','Russe'],['uk','Ukrainien'],['pl','Polonais'],['tr','Turc'],['hi','Hindi'],['bn','Bengali'],['ur','Ourdou'],['fa','Persan'],
+ ['he','Hébreu'],['el','Grec'],['sv','Suédois'],['no','Norvégien'],['da','Danois'],['fi','Finnois'],['cs','Tchèque'],['sk','Slovaque'],['hu','Hongrois'],['ro','Roumain'],
+ ['bg','Bulgare'],['hr','Croate'],['sr','Serbe'],['sl','Slovène'],['et','Estonien'],['lv','Letton'],['lt','Lituanien'],['sq','Albanais'],['mk','Macédonien'],['ca','Catalan'],
+ ['eu','Basque'],['gl','Galicien'],['vi','Vietnamien'],['th','Thaï'],['id','Indonésien'],['ms','Malais'],['tl','Filipino'],['ta','Tamoul'],['te','Télougou'],['mr','Marathi'],
+ ['pa','Pendjabi'],['gu','Gujarati'],['kn','Kannada'],['ml','Malayalam'],['sw','Swahili'],['am','Amharique'],['ha','Haoussa'],['yo','Yoruba'],['ka','Géorgien'],['hy','Arménien']];
+const langLabel=c=>(LANGS.find(l=>l[0]===c)||[0,c])[1];
+if(typeof set.trTarget!=='string')set.trTarget='';
+function trTarget(){return set.trTarget||(LANGS.some(l=>l[0]===navigator.language)?navigator.language:(navigator.language||'fr').split('-')[0])}
 function onTranslateState(js){try{TR=Object.assign(TR,JSON.parse(js))}catch{}if(TR.on)$('#trBar').hidden=true;if(curSec==='menu')drawMenu()}
-function onTranslateOffer(name){if(set.translate!=='offer')return;$('#trText').textContent='Page en '+name+'. La traduire ?';$('#trBar').hidden=false;requestAnimationFrame(reportHeight)}
-$('#trDo').onclick=()=>{$('#trBar').hidden=true;A('translate','do');requestAnimationFrame(reportHeight)};
+function onTranslateOffer(name,to){if(set.translate!=='offer')return;$('#trText').textContent='Page en '+name+'. Traduire en '+(set.trTarget?langLabel(set.trTarget).toLowerCase():(to||'français'))+' ?';$('#trBar').hidden=false;requestAnimationFrame(reportHeight)}
+$('#trDo').onclick=()=>{$('#trBar').hidden=true;A('translate','do:'+trTarget());requestAnimationFrame(reportHeight)};
 $('#trNo').onclick=()=>{$('#trBar').hidden=true;requestAnimationFrame(reportHeight)};
-$('#trNever').onclick=()=>{$('#trBar').hidden=true;A('translate','never');requestAnimationFrame(reportHeight)};
+$('#trNever').onclick=()=>{$('#trBar').hidden=true;show('trlang')};
+/* Liste des langues (menu ⋯ › Traduire) */
+function drawTrLang(){
+  const b=$('#trlangBody');b.innerHTML='';
+  if(TR.on){const r=el('button','btn ghost','Revenir à la page d’origine');r.style.margin='0 0 12px';r.onclick=()=>{collapse();A('translate','restore')};b.append(r)}
+  if(TR.doc)b.append(el('p','muted small','Langue de la page : '+esc(TR.docName||TR.doc)+'. Touche la langue dans laquelle tu veux la lire.'));
+  const q=el('input');q.type='search';q.placeholder='Chercher une langue';q.className='field';q.style.cssText='width:100%;margin:0 0 10px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bar2);color:var(--text)';b.append(q);
+  const c=card();b.append(c);
+  const t=trTarget();
+  const list=()=>{c.innerHTML='';const f=q.value.trim().toLowerCase();
+    [...LANGS].sort((x,y)=>(y[0]===t)-(x[0]===t)).filter(l=>!f||l[1].toLowerCase().includes(f)||l[0].includes(f)).forEach(([k,n])=>{
+      const r=el('button','set',(k===t?ICON.tr:'<span style="width:22px"></span>')+'<span class="t">'+n+'<small>'+k+'</small></span>');r.style.cssText='width:100%;text-align:left';
+      r.onclick=()=>{collapse();A('translate','do:'+k)};c.append(r)})};
+  q.oninput=list;list();
+  const n=el('p','muted small','Les langues connues du traducteur de Firefox sont traduites sur le téléphone, sans rien envoyer. Pour les autres, AIR Navig passe par Google Traduction : la page est alors envoyée à Google.');n.style.marginTop='12px';b.append(n);
+}
 function drawTr(){
   const b=$('#trBody');b.innerHTML='';
-  b.append(el('p','muted small','Les pages sont traduites <b>sur ton téléphone</b> par le moteur Firefox Translations : le texte n’est envoyé à aucun service en ligne. La première fois, le modèle de la langue (quelques Mo) est téléchargé depuis Mozilla.'));
+  b.append(el('p','muted small','Les pages sont traduites <b>sur ton téléphone</b> par le moteur Firefox Translations quand il connaît la langue (le modèle, quelques Mo, est téléchargé la première fois). Pour les autres langues, AIR Navig utilise Google Traduction.'));
   const c=card();[['auto','Automatique','Les pages dans une autre langue sont traduites dès leur ouverture.'],['offer','Proposer','Une barre te propose de traduire la page.'],['off','Désactivée','Tu peux toujours traduire depuis le menu ⋯.']].forEach(([k,t,d])=>{
     const r=el('label','set','<span class="t">'+t+'<small>'+d+'</small></span><input type="radio" name="trm" class="sw">');const i=r.querySelector('input');i.checked=set.translate===k;i.onchange=()=>{set.translate=k;saveSet();A('translate','mode:'+k)};c.append(r)});
   b.append(c);
+  b.append(head('Traduire vers'));
+  const c2=card();const r=el('div','set','<span class="t">Langue<small>Les pages sont traduites dans cette langue</small></span>');
+  const sel=document.createElement('select');sel.style.cssText='max-width:55%;padding:8px;border-radius:10px;background:var(--bar2);color:var(--text);border:1px solid var(--line)';
+  sel.innerHTML='<option value="">Langue du téléphone</option>'+LANGS.map(([k,n])=>'<option value="'+k+'">'+n+'</option>').join('');sel.value=set.trTarget||'';
+  sel.onchange=()=>{set.trTarget=sel.value;saveSet();A('translate','lang:'+sel.value)};r.append(sel);c2.append(r);b.append(c2);
 }
 
 /* --- Extensions --- */
 let ADDONS=[];
-function onAddons(js){try{ADDONS=JSON.parse(js)||[]}catch{ADDONS=[]}if(curSec==='addons')drawAddonsList()}
+/* Moteurs ajoutés par les extensions (gardés pour être disponibles dès le démarrage) */
+function addonEngines(list){
+  Object.keys(ENGINES).filter(k=>k.startsWith('ext:')).forEach(k=>{delete ENGINES[k];delete LOGOS[k]});
+  (list||[]).forEach(e=>{if(!e||!e.id||!e.url||!/^https:\/\//.test(e.url))return;const k='ext:'+e.id;
+    let origin='';try{origin=new URL(e.url.replace('{searchTerms}','x')).origin}catch{return}
+    ENGINES[k]={name:e.name||'Extension',desc:'Ajouté par une extension',bang:(e.keyword||'').replace(/^[@!]/,'').toLowerCase()||k.slice(4,8),home:origin+'/',
+      search:q=>e.url.split('{searchTerms}').join(encodeURIComponent(q)),
+      match:u=>{try{const t=new URL(e.url.replace('{searchTerms}','__q__'));if(u.origin!==t.origin||u.pathname!==t.pathname)return null;for(const [p,v] of t.searchParams)if(v==='__q__')return u.searchParams.get(p);}catch{}return null}};
+    LOGOS[k]=e.icon&&/^(https:|data:image\/)/.test(e.icon)?e.icon:(e.addonIcon||LOGOS.duckduckgo)});
+  if(!ENGINES[set.engine]){set.engine='google';saveSet()}
+}
+addonEngines(S.get('extEngines',[]));
+function drawExtBtns(){
+  const box=$('#extBtns');if(!box)return;box.innerHTML='';
+  if(READING||READABLE){const r=document.createElement('button');r.className='xb'+(READING?' on':'');r.setAttribute('aria-label','Mode lecture');r.innerHTML=ICON.book;r.onclick=e=>{e.stopPropagation();A('reader')};box.append(r)}
+  ADDONS.filter(x=>x.on&&x.action).slice(0,3).forEach(x=>{const b=document.createElement('button');b.className='xb';b.setAttribute('aria-label',x.action);
+    b.innerHTML=x.icon?'<img src="'+esc(x.icon)+'" alt="">':ICON.puzzle;b.onclick=e=>{e.stopPropagation();A('addons',JSON.stringify({op:'action',id:x.id}))};box.append(b)});
+}
+function onAddons(js){try{ADDONS=JSON.parse(js)||[]}catch{ADDONS=[]}
+  const known=S.get('extEngines',[]);const eng=ADDONS.filter(x=>x.on&&x.search).map(x=>Object.assign({id:x.id,addonIcon:x.icon},x.search));
+  const fresh=eng.filter(e=>!known.some(k=>k.id===e.id));
+  S.set('extEngines',eng);addonEngines(eng);
+  fresh.forEach(e=>{notice('Moteur ajouté par une extension : '+e.name);if(e.def&&!INCOG&&confirm('L’extension propose « '+e.name+' » comme moteur de recherche par défaut. L’utiliser ?')){set.engine='ext:'+e.id;saveSet()}});
+  drawExtBtns();drawBar();if(curSec==='addons')drawAddonsList();if(curSec==='engines'&&window.drawEngines)drawEngines()}
 function drawAddons(){A('addons','list');drawAddonsList()}
 function drawAddonsList(){
   const b=$('#addonBody');b.innerHTML='';
@@ -861,6 +875,7 @@ function drawAddonsList(){
   if(!ADDONS.length){b.append(el('p','muted small','Aucune extension installée.'));return}
   ADDONS.forEach(x=>{const c=card();
     c.append(el('div','set',(x.icon?'<img src="'+esc(x.icon)+'" alt="" style="width:32px;height:32px;border-radius:8px;flex:none">':ICON.puzzle)+'<span class="t"><b>'+esc(x.name)+'</b> <small>'+esc(x.version)+(x.desc?' · '+esc(x.desc):'')+'</small></span>'));
+    if(x.search)c.append(el('div','set','<span class="t">Moteur de recherche<small>'+esc(x.search.name)+' : ajouté à tes moteurs (choisis-le en touchant le logo à gauche de la barre).</small></span>'));
     c.append(swRow('Activée','',()=>x.on,()=>A('addons',JSON.stringify({op:'toggle',id:x.id}))));
     c.append(swRow('En navigation privée','Autoriser cette extension dans les onglets privés.',()=>x.priv,()=>A('addons',JSON.stringify({op:'private',id:x.id}))));
     const r=el('div','');r.style.cssText='display:flex;gap:8px;flex-wrap:wrap;padding:10px 6px';
@@ -876,6 +891,8 @@ drawBar();
 (function start(){
   const initial=decodeURIComponent(location.hash.slice(1)||'');
   tabsKeep();
+  setTimeout(()=>A('addons','list'),1500);
+  if(set.trTarget)A('translate','lang:'+set.trTarget);
   if(initial&&/^(https?|content):/i.test(initial)){tabs.push({id:newTabId(),url:initial,title:host(initial)});cur=tabs.length-1;saveTabs();switchTo(cur,initial)}
   else switchTo(cur,tabs[cur]?.url||homeUrl());
 })();

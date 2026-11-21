@@ -250,6 +250,15 @@ html.th-citrus{--bg:#fff7e6;--bar:rgba(255,255,255,.6);--bar2:rgba(255,255,255,.
 #trNever,#trNo{color:var(--muted)}
 html.pos-top #trBar{order:6;border-bottom:0;border-top:1px solid var(--line)}
 html.pos-right #trBar{display:none!important}
+
+/* Boutons des extensions et du mode lecture dans la barre d'adresse */
+#extBtns{display:flex;align-items:center;gap:2px;flex:none}
+#extBtns:empty{display:none}
+#extBtns .xb{width:32px;height:30px;display:grid;place-items:center;border-radius:calc(15px*var(--rs,1));color:var(--muted)}
+#extBtns .xb.on{color:var(--accent);background:rgba(139,124,255,.14)}
+#extBtns .xb svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#extBtns .xb img{width:20px;height:20px;object-fit:contain;border-radius:4px}
+html.pos-right #extBtns{flex-direction:column}
 </style>
 </head>
 <body>
@@ -262,13 +271,14 @@ html.pos-right #trBar{display:none!important}
     <button id="whyBtn">Pourquoi ?</button>
   </div>
   <div id="notice" hidden></div>
-  <div id="trBar" hidden><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8"/><path d="M13 21l4-10 4 10M14.5 17.5h5"/></svg><span id="trText"></span><button id="trDo">Traduire</button><button id="trNever" title="Jamais pour ce site">Jamais</button><button id="trNo" aria-label="Fermer">✕</button></div>
+  <div id="trBar" hidden><svg viewBox="0 0 24 24"><path d="M3 5h10M8 3v2M5 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8"/><path d="M13 21l4-10 4 10M14.5 17.5h5"/></svg><span id="trText"></span><button id="trDo">Traduire</button><button id="trNever">Autre langue</button><button id="trNo" aria-label="Fermer">✕</button></div>
   <div id="prog"><i></i></div>
   <div id="row">
   <div class="omni">
     <span id="incogTag" title="Navigation privée"><svg viewBox="0 0 24 24"><path d="M3 11h18M6 11l2-6h8l2 6"/><circle cx="7.5" cy="16" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path d="M10 16h4"/></svg><span>Privé</span></span>
     <button id="engBtn" aria-label="Choisir le moteur"><img class="logo" id="engLogo" alt=""><svg class="caret" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></button>
     <button id="addr"></button>
+    <span id="extBtns"></span>
     <button id="shieldBtn" aria-label="Bouclier"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span id="shieldN">0</span></button>
   </div>
   <div class="nav">
@@ -327,7 +337,6 @@ html.pos-right #trBar{display:none!important}
       <div style="display:flex;gap:10px;margin-bottom:12px"><button class="btn" id="tNew">+ Nouvel onglet</button><button class="btn ghost" id="tCloseAll">Tout fermer</button></div>
       <div class="tabs" id="tabList"></div>
       <p class="muted small" style="margin:10px 2px">Appuie longuement sur un onglet puis fais-le glisser pour le déplacer.</p>
-      <div id="remoteTabs"></div>
     </section>
 
     <section class="sec" data-s="bookmarks"><div id="bmList"></div></section>
@@ -379,7 +388,7 @@ html.pos-right #trBar{display:none!important}
     <section class="sec" data-s="set_look"><div id="lookBody"></div></section>
     <section class="sec" data-s="set_bar"><div id="barBody"></div></section>
     <section class="sec" data-s="set_home"><div id="homeBody"></div></section>
-    <section class="sec" data-s="set_sync"><div id="syncBody"></div></section>
+    <section class="sec" data-s="trlang"><div id="trlangBody"></div></section>
     <section class="sec" data-s="set_tr"><div id="trBody"></div></section>
     <section class="sec" data-s="addons"><div id="addonBody"></div></section>
   </div>

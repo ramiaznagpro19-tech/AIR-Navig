@@ -120,6 +120,7 @@ final class Addons {
             @Override
             public void onUninstalled(@NonNull WebExtension ext) {
                 exts.remove(ext.id);
+                searchCache.remove(ext.id);
                 actions.remove(ext.id);
                 MainActivity a = front();
                 if (a != null) pushList(a);
@@ -333,12 +334,107 @@ final class Addons {
                             .put("options", e.metaData.optionsPageUrl != null && !e.metaData.optionsPageUrl.isEmpty())
                             .put("action", act != null ? (act.title == null || act.title.isEmpty() ? name(e) : act.title) : "")
                             .put("priv", e.metaData.allowedInPrivateBrowsing)
-                            .put("icon", icons.containsKey(e.id) ? icons.get(e.id) : ""));
+                            .put("icon", icons.containsKey(e.id) ? icons.get(e.id) : "")
+                            .put("search", searchProvider(a, e.id)));
                 } catch (Exception ignored) {
                 }
             }
             a.call("onAddons", arr.toString());
         }, err -> a.call("onAddons", "[]"));
+    }
+
+    /* ======================= Moteurs de recherche fournis par les extensions ======================= */
+
+    private static final Map<String, JSONObject> searchCache = new HashMap<>();
+
+    /** Fichier .xpi installé d'une extension, dans le profil Gecko de l'appli. */
+    @Nullable
+    private static java.io.File findXpi(java.io.File dir, String name, int depth) {
+        java.io.File[] list = dir.listFiles();
+        if (list == null) return null;
+        for (java.io.File f : list) if (f.isFile() && f.getName().equals(name)) return f;
+        if (depth <= 0) return null;
+        for (java.io.File f : list) {
+            if (!f.isDirectory()) continue;
+            java.io.File r = findXpi(f, name, depth - 1);
+            if (r != null) return r;
+        }
+        return null;
+    }
+
+    private static String readEntry(java.util.zip.ZipFile z, String name) throws Exception {
+        java.util.zip.ZipEntry en = z.getEntry(name);
+        if (en == null || en.getSize() > 2_000_000) return null;
+        try (java.io.InputStream in = z.getInputStream(en)) {
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[16384];
+            int n;
+            while ((n = in.read(b)) > 0) bo.write(b, 0, n);
+            String txt = new String(bo.toByteArray(), java.nio.charset.StandardCharsets.UTF_8);
+            return txt.startsWith("\uFEFF") ? txt.substring(1) : txt;
+        }
+    }
+
+    /** Remplace « __MSG_nom__ » par le texte traduit de l'extension (français si disponible). */
+    private static String msg(java.util.zip.ZipFile z, String defLocale, String v) {
+        if (v == null || !v.startsWith("__MSG_") || !v.endsWith("__")) return v;
+        String key = v.substring(6, v.length() - 2);
+        for (String loc : new String[]{"fr", "fr_FR", defLocale, "en", "en_US"}) {
+            if (loc == null) continue;
+            try {
+                String j = readEntry(z, "_locales/" + loc + "/messages.json");
+                if (j == null) continue;
+                JSONObject m = new JSONObject(j);
+                for (java.util.Iterator<String> it = m.keys(); it.hasNext(); ) {
+                    String k = it.next();
+                    if (k.equalsIgnoreCase(key)) return m.getJSONObject(k).optString("message", v);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return v;
+    }
+
+    /**
+     * Moteur de recherche déclaré par l'extension (manifest : chrome_settings_overrides.search_provider),
+     * pour l'ajouter aux moteurs d'AIR Navig. null si l'extension n'en fournit pas.
+     */
+    @Nullable
+    static JSONObject searchProvider(android.content.Context c, String id) {
+        if (searchCache.containsKey(id)) return searchCache.get(id);
+        JSONObject out = null;
+        try {
+            java.io.File root = new java.io.File(c.getFilesDir(), "mozilla");
+            java.io.File xpi = findXpi(root.exists() ? root : c.getFilesDir(), id + ".xpi", 4);
+            if (xpi != null) {
+                try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(xpi)) {
+                    String mf = readEntry(z, "manifest.json");
+                    if (mf != null) {
+                        JSONObject m = new JSONObject(mf.replaceAll("(?m)^\\s*//.*$", ""));
+                        JSONObject o = m.optJSONObject("chrome_settings_overrides");
+                        JSONObject sp = o == null ? null : o.optJSONObject("search_provider");
+                        String loc = m.optString("default_locale", null);
+                        if (sp != null) {
+                            String url = msg(z, loc, sp.optString("search_url", ""));
+                            String params = msg(z, loc, sp.optString("search_url_get_params", ""));
+                            if (!params.isEmpty()) url += (url.contains("?") ? "&" : "?") + params;
+                            if (url.startsWith("https://") && url.contains("{searchTerms}")) {
+                                out = new JSONObject()
+                                        .put("name", msg(z, loc, sp.optString("name", m.optString("name", id))))
+                                        .put("url", url)
+                                        .put("keyword", msg(z, loc, sp.optString("keyword", "")))
+                                        .put("icon", msg(z, loc, sp.optString("favicon_url", "")))
+                                        .put("def", sp.optBoolean("is_default", false));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Moteur de l'extension " + id, e);
+        }
+        if (out != null) searchCache.put(id, out);
+        return out;
     }
 
     /** Commande de l'interface : {op, id}. */

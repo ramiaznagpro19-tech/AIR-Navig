@@ -409,7 +409,7 @@ final class Prompts implements PromptDelegate {
         new AlertDialog.Builder(act)
                 .setTitle(update ? "Mettre à jour le mot de passe ?" : "Enregistrer le mot de passe ?")
                 .setMessage((host == null ? e.origin : host) + (e.username == null || e.username.isEmpty() ? "" : "\nIdentifiant : " + e.username)
-                        + "\n\nIl sera chiffré sur ce téléphone" + (Sync.configured(act) ? " et synchronisé." : "."))
+                        + "\n\nIl sera chiffré sur ce téléphone.")
                 .setPositiveButton(update ? "Mettre à jour" : "Enregistrer", (d, w) -> {
                     done[0] = true;
                     res.complete(request.confirm(opt));

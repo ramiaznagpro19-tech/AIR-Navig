@@ -151,8 +151,7 @@ public class PasswordsActivity extends Activity {
         if (!unlocked || list == null) return;
         Passwords pw = Passwords.get(this);
         List<Passwords.Login> all = pw.all();
-        countView.setText(all.size() + " identifiant" + (all.size() > 1 ? "s" : "") + " · chiffrés sur ce téléphone"
-                + (Sync.configured(this) ? " · synchronisés" : ""));
+        countView.setText(all.size() + " identifiant" + (all.size() > 1 ? "s" : "") + " · chiffrés sur ce téléphone");
         String q = search.getText().toString().trim().toLowerCase(Locale.ROOT);
         list.removeAllViews();
         int shown = 0;

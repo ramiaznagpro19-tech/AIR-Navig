@@ -150,8 +150,13 @@ public class MainActivity extends Activity {
     private int barSize = 120;
     private boolean barFull = false;
 
-    /* Traduction : off, offer (proposer) ou auto. */
+    /* Traduction : off, offer (proposer) ou auto. Langue cible choisie ("" = langue du téléphone). */
     private String translateMode = "offer";
+    private String targetLang = "";
+    /** Langues du moteur local Firefox Translations (codes de base : fr, de, zh…). */
+    private static final Set<String> localFrom = Collections.synchronizedSet(new HashSet<String>());
+    private static final Set<String> localTo = Collections.synchronizedSet(new HashSet<String>());
+    private static boolean localLangsAsked;
 
     /* ======================= Onglets ======================= */
 
@@ -259,6 +264,8 @@ public class MainActivity extends Activity {
         barSize = pos == POS_RIGHT ? 64 : pos == POS_TOP ? 60 : 120;
         adapt = prefs.getBoolean("adapt", true);
         translateMode = prefs.getString("translate", "offer");
+        targetLang = prefs.getString("trTarget", "");
+        forgetSync();
 
         root = new FrameLayout(this);
         root.setBackgroundColor(BG);
@@ -280,6 +287,7 @@ public class MainActivity extends Activity {
             if (isFinishing() || isDestroyed()) return;
             applyLook();
             createUi(initial);
+            loadLocalLangs();
         });
 
         new Thread(() -> {
@@ -290,6 +298,22 @@ public class MainActivity extends Activity {
                 if (Updater.due(getApplicationContext())) Updater.check(MainActivity.this, false);
             }
         }).start();
+    }
+
+    /** La synchronisation a été retirée : on efface son réglage et on rend l'accès au fichier choisi. */
+    private void forgetSync() {
+        String u = prefs.getString("sync_uri", null);
+        if (u != null) {
+            try {
+                getContentResolver().releasePersistableUriPermission(Uri.parse(u),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            } catch (Exception ignored) {
+            }
+        }
+        if (prefs.contains("sync_uri") || prefs.contains("sync_pass") || prefs.contains("sync_dev")) {
+            prefs.edit().remove("sync_uri").remove("sync_pass").remove("sync_name").remove("sync_last")
+                    .remove("sync_err").remove("sync_dev").apply();
+        }
     }
 
     /** Session de l'interface : la page chrome.html de l'extension intégrée. */
@@ -355,7 +379,6 @@ public class MainActivity extends Activity {
                 if (s != null && s.length() <= MAX_ARG) init.put("initSettings", s);
             }
             init.put("about", about());
-            init.put("sync", Sync.status(this));
             init.put("translate", translateMode);
         } catch (Exception ignored) {
         }
@@ -1049,16 +1072,8 @@ public class MainActivity extends Activity {
                     startActivity(new Intent(this, PasswordsActivity.class));
                     break;
                 case "sync":
-                    if (incognito()) {
-                        notice("La synchro n'est pas disponible en navigation privée");
-                        break;
-                    }
-                    if ("now".equals(a)) Sync.run(this, true);
-                    else if ("status".equals(a)) call("onSyncStatus", Sync.status(this).toString());
-                    else Sync.setup(this);
-                    break;
                 case "syncput":
-                    Sync.put(this, a);
+                    // Synchronisation retirée.
                     break;
                 case "addons":
                     Addons.cmd(this, a.startsWith("{") ? new JSONObject(a) : new JSONObject().put("op", a));
@@ -1768,7 +1783,13 @@ public class MainActivity extends Activity {
             return;
         }
         if (cur.port == null) {
-            notice("La page n'est pas encore prête");
+            // Liaison en cours de rétablissement (page restaurée…) : on réessaie un instant après.
+            final Tab t = cur;
+            ui.postDelayed(() -> {
+                if (t != cur) return;
+                if (t.port != null) toggleReader();
+                else notice("Mode lecture : recharge la page puis réessaie");
+            }, 800);
             return;
         }
         try {
@@ -1906,7 +1927,7 @@ public class MainActivity extends Activity {
             t.offered = true;
             if (t != cur) return;
             if ("auto".equals(translateMode)) translateNow(t, false);
-            else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)));
+            else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)), langName(userLang(t)));
         }
 
         @Override
@@ -1940,28 +1961,56 @@ public class MainActivity extends Activity {
         t.offered = true;
         if (t != cur) return;
         if ("auto".equals(translateMode)) translateNow(t, false);
-        else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)));
+        else if ("offer".equals(translateMode)) call("onTranslateOffer", langName(docLang(t)), langName(userLang(t)));
     }
 
-    private static String userLang(Tab t) {
+    /** Langue vers laquelle traduire : celle choisie dans les réglages, sinon celle du téléphone. */
+    private String userLang(Tab t) {
+        if (targetLang != null && !targetLang.isEmpty()) return targetLang;
         String u = t == null || t.tstate == null || t.tstate.detectedLanguages == null ? null : t.tstate.detectedLanguages.userLangTag;
         if (u == null || u.isEmpty()) u = Locale.getDefault().getLanguage();
         return u == null || u.isEmpty() ? "fr" : u;
     }
 
+    /** Charge une fois la liste des langues du moteur local. */
+    private static void loadLocalLangs() {
+        if (localLangsAsked) return;
+        localLangsAsked = true;
+        try {
+            TranslationsController.RuntimeTranslation.listSupportedLanguages().accept(sup -> {
+                if (sup == null) return;
+                if (sup.fromLanguages != null) for (TranslationsController.Language l : sup.fromLanguages) localFrom.add(baseLang(l.code).toLowerCase(Locale.ROOT));
+                if (sup.toLanguages != null) for (TranslationsController.Language l : sup.toLanguages) localTo.add(baseLang(l.code).toLowerCase(Locale.ROOT));
+                Log.i(TAG, "traduction locale : " + localFrom.size() + " langues source, " + localTo.size() + " cibles");
+            }, e -> {
+                localLangsAsked = false;
+                Log.w(TAG, "Langues de traduction", e);
+            });
+        } catch (Throwable e) {
+            localLangsAsked = false;
+        }
+    }
+
+    /** Chinois traditionnel et quelques variantes ne sont pas dans le moteur local. */
+    private static boolean localPair(@Nullable String from, String to) {
+        if (from == null || from.isEmpty()) return false;
+        if (to.equalsIgnoreCase("zh-TW") || from.equalsIgnoreCase("zh-TW")) return false;
+        return localFrom.contains(baseLang(from).toLowerCase(Locale.ROOT)) && localTo.contains(baseLang(to).toLowerCase(Locale.ROOT));
+    }
+
     static String langName(@Nullable String tag) {
         if (tag == null || tag.isEmpty()) return "langue inconnue";
+        if (tag.equalsIgnoreCase("zh-TW")) return "chinois traditionnel";
+        if (tag.equalsIgnoreCase("zh-CN") || tag.equalsIgnoreCase("zh")) return "chinois simplifié";
         String n = Locale.forLanguageTag(tag).getDisplayLanguage(Locale.FRENCH);
         return n == null || n.isEmpty() ? tag : n;
     }
 
-    private static boolean canTranslate(Tab t) {
+    private boolean canTranslate(Tab t) {
         if (t == null || t.url == null || !(t.url.startsWith("http://") || t.url.startsWith("https://"))) return false;
+        if (t.url.contains(".translate.goog") || t.url.startsWith("https://translate.google.")) return false;
         String d = docLang(t);
-        boolean unsupported = t.tstate != null && t.tstate.detectedLanguages != null
-                && Boolean.FALSE.equals(t.tstate.detectedLanguages.isDocLangTagSupported)
-                && t.tstate.detectedLanguages.docLangTag != null;
-        return !unsupported && d != null && !d.isEmpty() && !baseLang(d).equalsIgnoreCase(baseLang(userLang(t)));
+        return d != null && !d.isEmpty() && !baseLang(d).equalsIgnoreCase(baseLang(userLang(t)));
     }
 
     private static String baseLang(String tag) {
@@ -1976,6 +2025,8 @@ public class MainActivity extends Activity {
             j.put("doc", d == null ? "" : d);
             j.put("docName", langName(d));
             j.put("user", userLang(t));
+            j.put("userName", langName(userLang(t)));
+            j.put("google", t.url != null && t.url.contains(".translate.goog"));
             j.put("on", t.translated);
             j.put("can", canTranslate(t));
             j.put("err", t.tstate == null || t.tstate.error == null ? "" : t.tstate.error);
@@ -1985,36 +2036,67 @@ public class MainActivity extends Activity {
     }
 
     private void translateNow(final Tab t, boolean manual) {
-        if (t == null || t.s == null) return;
-        String from = docLang(t);
-        String to = userLang(t);
-        if (from == null || from.isEmpty()) {
-            if (manual) notice("Langue de la page pas encore détectée : réessaie dans un instant");
-            return;
-        }
-        if (baseLang(from).equalsIgnoreCase(baseLang(to))) {
+        translateTo(t, manual, userLang(t));
+    }
+
+    /**
+     * Traduit la page vers {@code to}. Sur le téléphone (Firefox Translations) quand le moteur local
+     * connaît les deux langues ; sinon par Google Traduction (la page lui est alors envoyée, on le signale).
+     */
+    private void translateTo(final Tab t, boolean manual, final String to) {
+        if (t == null || t.s == null || to == null || to.isEmpty()) return;
+        loadLocalLangs();
+        final String from = docLang(t);
+        if (from != null && !from.isEmpty() && baseLang(from).equalsIgnoreCase(baseLang(to)) && !to.equalsIgnoreCase("zh-TW")) {
             if (manual) notice("La page est déjà en " + langName(to));
             return;
         }
         TranslationsController.SessionTranslation st = t.s.getSessionTranslation();
-        if (st == null) {
-            notice("Traduction non disponible sur ce téléphone");
+        if (st != null && localPair(from, to)) {
+            notice("Traduction de " + langName(from) + " vers " + langName(to) + " sur le téléphone… (la 1re fois, le modèle de langue est téléchargé)");
+            st.translate(from, baseLang(to), new TranslationsController.SessionTranslation.TranslationOptions.Builder().downloadModel(true).build())
+                    .accept(v -> {
+                        t.translated = true;
+                        if (t == cur) pushTranslateState(t);
+                    }, e -> {
+                        Log.w(TAG, "Traduction locale", e);
+                        translateOnline(t, from, to);
+                    });
             return;
         }
-        notice("Traduction de " + langName(from) + " vers " + langName(to) + "… (la 1re fois, le modèle de langue est téléchargé)");
-        st.translate(from, to, new TranslationsController.SessionTranslation.TranslationOptions.Builder().downloadModel(true).build())
-                .accept(v -> {
-                    t.translated = true;
-                    if (t == cur) pushTranslateState(t);
-                }, e -> notice("Traduction impossible" + (e instanceof TranslationsController.TranslationsException
-                        && ((TranslationsController.TranslationsException) e).code == TranslationsController.TranslationsException.ERROR_LANGUAGE_NOT_SUPPORTED
-                        ? " : langue non prise en charge" : "")));
+        translateOnline(t, from, to);
+    }
+
+    private void translateOnline(Tab t, @Nullable String from, String to) {
+        String u = t.url;
+        if (u == null || !(u.startsWith("http://") || u.startsWith("https://"))) {
+            notice("Seules les pages des sites web peuvent être traduites");
+            return;
+        }
+        String sl = from == null || from.isEmpty() ? "auto" : (from.toLowerCase(Locale.ROOT).startsWith("zh") ? from : baseLang(from));
+        notice("Traduction en " + langName(to) + " par Google Traduction (cette langue n'est pas dans le traducteur du téléphone)");
+        t.translated = true;
+        t.s.loadUri("https://translate.google.com/translate?sl=" + Uri.encode(sl) + "&tl=" + Uri.encode(to) + "&hl=fr&u=" + Uri.encode(u));
     }
 
     private void translateCmd(String a) {
         if (a.startsWith("mode:")) {
             translateMode = a.substring(5);
             savePref("translate", translateMode);
+            return;
+        }
+        if (a.startsWith("lang:")) {
+            String l = a.substring(5);
+            if (l.isEmpty() || l.matches("[A-Za-z]{2,3}(-[A-Za-z]{2,4})?")) {
+                targetLang = l;
+                savePref("trTarget", l);
+                if (cur != null) pushTranslateState(cur);
+            }
+            return;
+        }
+        if (a.startsWith("do:")) {
+            String l = a.substring(3);
+            if (cur != null && l.matches("[A-Za-z]{2,3}(-[A-Za-z]{2,4})?")) translateTo(cur, true, l);
             return;
         }
         if (cur == null || cur.s == null) return;
@@ -2024,6 +2106,11 @@ public class MainActivity extends Activity {
                 translateNow(cur, true);
                 break;
             case "restore":
+                if (cur.url != null && cur.url.contains(".translate.goog")) {
+                    if (cur.canBack) cur.s.goBack();
+                    cur.translated = false;
+                    break;
+                }
                 if (st != null) st.restoreOriginalPage().accept(v -> {
                     if (cur != null) {
                         cur.translated = false;
@@ -2238,8 +2325,6 @@ public class MainActivity extends Activity {
         super.onActivityResult(code, result, data);
         if (code == REQ_FILE) {
             prompts.onFileResult(result, data);
-        } else if (code == Sync.REQ_CREATE || code == Sync.REQ_OPEN) {
-            if (result == RESULT_OK) Sync.onPicked(this, code, data);
         } else if (code == REQ_OPEN && result == RESULT_OK && data != null && data.getData() != null) {
             Uri d = data.getData();
             if (!"content".equals(d.getScheme())) return;
@@ -2269,6 +2354,7 @@ public class MainActivity extends Activity {
         else if (t.startsWith("show:")) toJs("show(" + JSONObject.quote(t.substring(5)) + ")");
         else if (t.equals("collapse")) toJs("collapse()");
         else if (t.startsWith("type:")) toJs("go(" + JSONObject.quote(t.substring(5)) + ")");
+        else if (t.startsWith("install:")) Addons.install(t.substring(8));
         else {
             int i = t.indexOf(':');
             runCmd(i < 0 ? t : t.substring(0, i), i < 0 ? "" : t.substring(i + 1));
@@ -2288,11 +2374,6 @@ public class MainActivity extends Activity {
         Engine.front = this;
         Passwords.privateFront = incognito();
         if (content != null) content.setActive(true);
-        if (!incognito() && Sync.configured(this) && System.currentTimeMillis() - Sync.last(this) > 10 * 60_000L) {
-            ui.postDelayed(() -> {
-                if (uiReady) Sync.run(this, false);
-            }, 4000);
-        }
     }
 
     @Override
@@ -2301,7 +2382,6 @@ public class MainActivity extends Activity {
         if (!incognito()) {
             ui.removeCallbacks(saveTabStore);
             saveTabStore.run();
-            if (Sync.configured(this) && uiReady && System.currentTimeMillis() - Sync.last(this) > 2 * 60_000L) Sync.run(this, false);
         }
     }
 
