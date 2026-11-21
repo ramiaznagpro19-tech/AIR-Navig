@@ -1,0 +1,612 @@
+11-21 16:16:11.454  3540  3686 I GeckoConsole: No chrome package registered for chrome://browser/content/built_in_addons.json
+11-21 16:16:12.627  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnInstalling
+11-21 16:16:12.734  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnOptionalPermissionsChanged
+11-21 16:16:12.734  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnOptionalPermissionsChanged
+11-21 16:16:13.519  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:Connect
+11-21 16:16:13.563  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnInstalled
+11-21 16:16:13.567  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnReady
+11-21 16:16:13.592  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnDisabling
+11-21 16:16:13.606  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnDisabled
+11-21 16:16:13.607  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnEnabling
+11-21 16:16:13.708  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:Connect
+11-21 16:16:13.715  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnEnabled
+11-21 16:16:13.729  3540  3540 I WebExtension: releasePendingMessages: extension=air@airnavig.app nativeApp=air_bg session=null
+11-21 16:16:13.730  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:Connect
+11-21 16:16:13.731  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:Connect
+11-21 16:16:13.731  3540  3540 I WebExtension: releasePendingMessages: extension=air@airnavig.app nativeApp=air_ui session=null
+11-21 16:16:13.785  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnReady
+11-21 16:16:13.796  3540  3540 I AIRNavig: air_bg connecté
+11-21 16:16:13.796  3540  3540 I AIRNavig: air_bg connecté
+11-21 16:16:15.578  3540  3540 D GeckoSession: handleMessage GeckoView:LocationChange uri=moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.html?i=%7B%22sysDark%22%3Afalse%2C%22incog%22%3Afalse%2C%22pos%22%3A%22bottom%22%2C%22about%22%3A%7B%22creator%22%3A%22Rami%22%2C%22brand%22%3A%22AIR%22%2C%22version%22%3A%22test%20(1)%22%2C%22signer%22%3A%229F%3A18%3AB9%3AC0%3AF7%3A97%3AD2%3A50%3A23%3A6C%3A0E%3AC7%3A29%3AD2%3A12%3A5E%3A5D%3A1E%3AB5%3AFB%3A1D%3A0C%3A38%3A43%3AE0%3A8F%3A1E%3A70%3A71%3A2A%3AD6%3A48%22%2C%22listSource%22%3A%22StevenBlack%5C%2Fhosts%20(licence%20MIT)%22%2C%22listHome%22%3A%22https%3A%5C%2F%5C%2Fgithub.com%5C%2FStevenBlack%5C%2Fhosts%22%2C%22listCount%22%3A77758%2C%22listDate%22%3A%2201%20November%202026%2018%3A49%3A06%20(UTC)%22%2C%22listOrigin%22%3A%22int%C3%A9gr%C3%A9e%20%C3%A0%20l%27appli%22%2C%22listSha%22%3A%220d81148f9990ecbde614ba1a135f81113fbb5f9972e783af22ff1c6dadb57508%22%2C%22appUpdate%22%3A%22adresse%20de%20publication%20%C3%A0%20renseigner%20par%20le%20d%C3%A9veloppeur%22%2C%22webview%22%3A%22GeckoView%20160.0.1%20(Mozilla)%22%2C%22engine%22%3A%22GeckoView%22%2C%22gecko%22%3A%22160.0.1%22%2C%22passwords%22%3A0%7D%2C%22translate%22%3A%22offer%22%7D#
+11-21 16:16:15.678  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:Connect
+11-21 16:16:16.092  3540  3540 I AIRNavig: interface prête, 4 messages en attente
+11-21 16:16:19.036  3540  3540 D GeckoSession: handleMessage GeckoView:PageStart uri=about:blank
+11-21 16:16:19.037  3540  3540 D GeckoSession: handleMessage GeckoView:LocationChange uri=about:blank
+11-21 16:16:19.037  3540  3540 D GeckoSession: handleMessage GeckoView:PageStop uri=null
+11-21 16:16:19.071  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:19.071  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:19.071  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:19.071  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:19.071  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:19.071  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:19.111  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:19.111  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:19.111  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:19.204  3540  3540 D GeckoSession: handleMessage GeckoView:ProgressChanged uri=null
+11-21 16:16:19.205  3540  3540 D GeckoSession: handleMessage GeckoView:PageStart uri=moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/home.html#t=light&th=auto&e=google&b=0&c=0&i=0&h=%7B%22s%22%3A%7B%22logo%22%3Atrue%2C%22name%22%3Atrue%2C%22search%22%3Atrue%2C%22engines%22%3Atrue%2C%22stats%22%3Atrue%2C%22greet%22%3Afalse%2C%22edit%22%3Atrue%7D%2C%22us%22%3A%22%22%2C%22ms%22%3A%22%22%2C%22bg%22%3A%22theme%22%2C%22co%22%3A%22%2316122b%22%2C%22dm%22%3A35%2C%22bl%22%3A0%2C%22al%22%3A%22top%22%2C%22sz%22%3A1%2C%22em%22%3Afalse%2C%22ac%22%3A%22%22%2C%22f%22%3A%22system-ui%2C-apple-system%2C%5C%22Segoe%20UI%5C%22%2CRoboto%2Csans-serif%22%2C%22rs%22%3A1%7D
+11-21 16:16:19.206  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:19.206  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:19.206  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:19.235  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:19.235  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:19.235  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:19.306  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=null, isEngineReady=false, hasVisibleChange=false}
+11-21 16:16:19.307  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=null, isEngineReady=false, hasVisibleChange=false}
+11-21 16:16:19.308  3540  3540 D GeckoSession: handleMessage GeckoView:LocationChange uri=moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/home.html#t=light&th=auto&e=google&b=0&c=0&i=0&h=%7B%22s%22%3A%7B%22logo%22%3Atrue%2C%22name%22%3Atrue%2C%22search%22%3Atrue%2C%22engines%22%3Atrue%2C%22stats%22%3Atrue%2C%22greet%22%3Afalse%2C%22edit%22%3Atrue%7D%2C%22us%22%3A%22%22%2C%22ms%22%3A%22%22%2C%22bg%22%3A%22theme%22%2C%22co%22%3A%22%2316122b%22%2C%22dm%22%3A35%2C%22bl%22%3A0%2C%22al%22%3A%22top%22%2C%22sz%22%3A1%2C%22em%22%3Afalse%2C%22ac%22%3A%22%22%2C%22f%22%3A%22system-ui%2C-apple-system%2C%5C%22Segoe%20UI%5C%22%2CRoboto%2Csans-serif%22%2C%22rs%22%3A1%7D
+11-21 16:16:19.308  3540  3540 D GeckoSession: handleMessage GeckoView:SecurityChanged uri=null
+11-21 16:16:19.328  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:19.328  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:19.328  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:19.465  3540  3540 D GeckoSession: handleMessage GeckoView:ProgressChanged uri=null
+11-21 16:16:19.528  3540  3540 D GeckoSession: handleMessage GeckoView:ProgressChanged uri=null
+11-21 16:16:19.528  3540  3540 D GeckoSession: handleMessage GeckoView:PageStop uri=null
+11-21 16:16:21.471  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:21.471  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:21.471  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:22.552  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:22.552  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:22.552  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:22.555  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:22.555  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:22.555  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:22.803  3540  3540 I AIRNavig: traduction locale : 57 langues source, 57 cibles
+11-21 16:16:22.874  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:22.874  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:22.874  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:22.884  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:22.884  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:22.884  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:23.072  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=DetectedLanguages {userLangTag='en', isDocLangTagSupported=true, docLangTag='fr'}, isEngineReady=false, hasVisibleChange=false}
+11-21 16:16:23.155  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=DetectedLanguages {userLangTag='en', isDocLangTagSupported=true, docLangTag='fr'}, isEngineReady=false, hasVisibleChange=false}
+11-21 16:16:25.608  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:16:29.527  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:16:37.840  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:37.840  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:37.840  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:45.774  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:45.774  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:45.774  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:46.100  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:46.100  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:46.100  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:47.053  3540  3686 I GeckoConsole: 1795277807053	addons.webextension.uBlock0@raymondhill.net	WARN	Loading extension 'uBlock0@raymondhill.net': Reading manifest: Warning processing permissions: Error processing permissions.2: Value "menus" must either: must either [must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripting"], or be one of ["webRequest", "webRequestAuthProvider", "webRequestBlocking", "webRequestFilterResponse", "webRequestFilterResponse.serviceWorkerScript"]], must either [be one of ["mozillaAddons"], be one of ["geckoViewAddons", "nativeMessagingFromContent"], be one of ["activityLog"], be one of ["networkStatus"], or be one of ["telemetry"]], be one of ["alarms", "storage", "unlimitedStorage"], be one of ["declarativeNetRequestWithHostAccess"], be one of ["dns"], or be one of ["theme"]], must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripting"], or be one
+11-21 16:16:47.054  3540  3686 I GeckoConsole: 1795277807054	addons.webextension.uBlock0@raymondhill.net	WARN	Loading extension 'uBlock0@raymondhill.net': Reading manifest: Warning processing commands: An unexpected property was found in the WebExtension manifest.
+11-21 16:16:47.207  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:InstallPrompt
+11-21 16:16:49.769  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:49.769  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:49.769  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:49.807  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:16:49.807  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:16:49.807  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:16:55.908  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:16:55.910  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:17:10.853  5746  5746 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-21 16:17:10.863  5746  5746 I AndroidRuntime: Using default boot image
+11-21 16:17:10.863  5746  5746 I AndroidRuntime: Leaving lock profiling enabled
+11-21 16:17:10.996  5746  5746 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-21 16:17:12.024  5746  5746 D AndroidRuntime: Shutting down VM
+11-21 16:17:13.007  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnInstalling
+11-21 16:17:13.040  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnInstalled
+11-21 16:17:13.067  3540  3686 I GeckoConsole: 1795277833067	addons.webextension.uBlock0@raymondhill.net	WARN	Loading extension 'uBlock0@raymondhill.net': Reading manifest: Warning processing permissions: Error processing permissions.2: Value "menus" must either: must either [must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripting"], or be one of ["webRequest", "webRequestAuthProvider", "webRequestBlocking", "webRequestFilterResponse", "webRequestFilterResponse.serviceWorkerScript"]], must either [be one of ["mozillaAddons"], be one of ["geckoViewAddons", "nativeMessagingFromContent"], be one of ["activityLog"], be one of ["networkStatus"], or be one of ["telemetry"]], be one of ["alarms", "storage", "unlimitedStorage"], be one of ["declarativeNetRequestWithHostAccess"], be one of ["dns"], or be one of ["theme"]], must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripting"], or be one
+11-21 16:17:13.068  3540  3686 I GeckoConsole: 1795277833068	addons.webextension.uBlock0@raymondhill.net	WARN	Loading extension 'uBlock0@raymondhill.net': Reading manifest: Warning processing commands: An unexpected property was found in the WebExtension manifest.
+11-21 16:17:13.091  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:13.091  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:13.091  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:13.105  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.135  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.139  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:13.139  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:13.139  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:13.175  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:13.175  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:13.175  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:13.178  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:13.178  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:13.178  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:13.220  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.220  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.222  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.222  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.222  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.230  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnReady
+11-21 16:17:13.230  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:13.234  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:13.234  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:13.234  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:13.234  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:13.234  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:13.234  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:13.234  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:13.234  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:13.234  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:13.234  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:13.234  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:13.234  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:13.234  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:13.235  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:13.235  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:13.235  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:13.235  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:13.235  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:13.235  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:13.235  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:13.235  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:13.235  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:13.235  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:13.235  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:13.235  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:13.235  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:13.236  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:13.236  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:13.236  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:13.236  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:13.236  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:13.236  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:13.236  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:13.236  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:13.236  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:13.236  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:13.236  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:13.236  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:13.236  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:13.236  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:13.236  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:13.236  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:13.236  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:13.236  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:13.236  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:13.237  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:13.237  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:13.237  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:13.237  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:13.237  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:13.237  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:13.237  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:13.237  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:13.237  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:13.237  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:13.237  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:13.237  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:13.237  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:13.250  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:13.250  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:13.250  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:13.250  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:13.250  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:13.250  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:13.250  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:13.250  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:13.250  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:13.250  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:13.250  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:13.250  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:13.250  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:15.361  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:15.361  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:15.361  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:17.060  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:17.060  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:17.060  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:17.104  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:17.104  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:17.104  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:23.115  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:17:23.116  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:17:25.075  5863  5863 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-21 16:17:25.081  5863  5863 I AndroidRuntime: Using default boot image
+11-21 16:17:25.081  5863  5863 I AndroidRuntime: Leaving lock profiling enabled
+11-21 16:17:25.243  5863  5863 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-21 16:17:26.312  5863  5863 D AndroidRuntime: Shutting down VM
+11-21 16:17:29.192  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:29.192  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:29.192  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:29.255  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:29.255  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:29.255  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:29.631  3540  3686 I GeckoConsole: 1795277849631	addons.webextension.jid1-ZAdIEUB7XOzOJw@jetpack	WARN	Loading extension 'jid1-ZAdIEUB7XOzOJw@jetpack': Reading manifest: Warning processing permissions: Error processing permissions.0: Value "contextMenus" must either: must either [must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripting"], or be one of ["webRequest", "webRequestAuthProvider", "webRequestBlocking", "webRequestFilterResponse", "webRequestFilterResponse.serviceWorkerScript"]], must either [be one of ["mozillaAddons"], be one of ["geckoViewAddons", "nativeMessagingFromContent"], be one of ["activityLog"], be one of ["networkStatus"], or be one of ["telemetry"]], be one of ["alarms", "storage", "unlimitedStorage"], be one of ["declarativeNetRequestWithHostAccess"], be one of ["dns"], or be one of ["theme"]], must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripti
+11-21 16:17:29.631  3540  3686 I GeckoConsole: 1795277849631	addons.webextension.jid1-ZAdIEUB7XOzOJw@jetpack	WARN	Loading extension 'jid1-ZAdIEUB7XOzOJw@jetpack': Reading manifest: Warning processing omnibox: An unexpected property was found in the WebExtension manifest.
+11-21 16:17:29.631  3540  3686 I GeckoConsole: 1795277849631	addons.webextension.jid1-ZAdIEUB7XOzOJw@jetpack	WARN	Loading extension 'jid1-ZAdIEUB7XOzOJw@jetpack': Reading manifest: Warning processing chrome_settings_overrides: An unexpected property was found in the WebExtension manifest.
+11-21 16:17:29.728  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:InstallPrompt
+11-21 16:17:33.190  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:33.190  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:33.190  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:33.253  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:33.253  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:33.253  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:39.247  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:17:39.247  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:17:54.233  6010  6010 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-21 16:17:54.235  6010  6010 I AndroidRuntime: Using default boot image
+11-21 16:17:54.235  6010  6010 I AndroidRuntime: Leaving lock profiling enabled
+11-21 16:17:54.305  6010  6010 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-21 16:17:55.331  6010  6010 D AndroidRuntime: Shutting down VM
+11-21 16:17:56.223  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnInstalling
+11-21 16:17:56.240  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnInstalled
+11-21 16:17:56.256  3540  3686 I GeckoConsole: 1795277876256	addons.webextension.jid1-ZAdIEUB7XOzOJw@jetpack	WARN	Loading extension 'jid1-ZAdIEUB7XOzOJw@jetpack': Reading manifest: Warning processing permissions: Error processing permissions.0: Value "contextMenus" must either: must either [must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripting"], or be one of ["webRequest", "webRequestAuthProvider", "webRequestBlocking", "webRequestFilterResponse", "webRequestFilterResponse.serviceWorkerScript"]], must either [be one of ["mozillaAddons"], be one of ["geckoViewAddons", "nativeMessagingFromContent"], be one of ["activityLog"], be one of ["networkStatus"], or be one of ["telemetry"]], be one of ["alarms", "storage", "unlimitedStorage"], be one of ["declarativeNetRequestWithHostAccess"], be one of ["dns"], or be one of ["theme"]], must either [must either [be one of ["idle"], be one of ["activeTab"], be one of ["cookies"], be one of ["publicSuffix"], be one of ["scripti
+11-21 16:17:56.257  3540  3686 I GeckoConsole: 1795277876257	addons.webextension.jid1-ZAdIEUB7XOzOJw@jetpack	WARN	Loading extension 'jid1-ZAdIEUB7XOzOJw@jetpack': Reading manifest: Warning processing omnibox: An unexpected property was found in the WebExtension manifest.
+11-21 16:17:56.257  3540  3686 I GeckoConsole: 1795277876257	addons.webextension.jid1-ZAdIEUB7XOzOJw@jetpack	WARN	Loading extension 'jid1-ZAdIEUB7XOzOJw@jetpack': Reading manifest: Warning processing chrome_settings_overrides: An unexpected property was found in the WebExtension manifest.
+11-21 16:17:56.273  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:56.273  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:56.273  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:56.274  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:56.294  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:56.294  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:56.306  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:56.306  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:56.361  3540  3686 E GeckoConsole: [JavaScript Error: "TypeError: can't access property "onFocusChanged", import_webextension_polyfill27.default.windows is undefined" {file: "moz-extension://f9d35919-d521-49b1-92b1-5aecb8138a1d/public/js/background.js" line: 25970}]
+11-21 16:17:56.361  3540  3686 E GeckoConsole: shared/js/background/events.js@moz-extension://f9d35919-d521-49b1-92b1-5aecb8138a1d/public/js/background.js:25970:7
+11-21 16:17:56.361  3540  3686 E GeckoConsole: __init@moz-extension://f9d35919-d521-49b1-92b1-5aecb8138a1d/public/js/background.js:12:60
+11-21 16:17:56.361  3540  3686 E GeckoConsole: @moz-extension://f9d35919-d521-49b1-92b1-5aecb8138a1d/public/js/background.js:28345:3
+11-21 16:17:56.361  3540  3686 E GeckoConsole: @moz-extension://f9d35919-d521-49b1-92b1-5aecb8138a1d/public/js/background.js:28414:3
+11-21 16:17:56.365  3540  3540 D GeckoSession: handleMessage GeckoView:Prompt
+11-21 16:17:56.368  3540  3686 E GeckoConsole: [JavaScript Error: "Native manifests are not supported on android" {file: "resource://gre/modules/NativeManifests.sys.mjs" line: 44}]
+11-21 16:17:56.368  3540  3686 E GeckoConsole: init@resource://gre/modules/NativeManifests.sys.mjs:44:15
+11-21 16:17:56.368  3540  3686 E GeckoConsole: lookupManifest@resource://gre/modules/NativeManifests.sys.mjs:205:17
+11-21 16:17:56.368  3540  3686 E GeckoConsole: lookupManagedStorage@chrome://extensions/content/parent/ext-storage.js:89:36
+11-21 16:17:56.368  3540  3686 E GeckoConsole: getManagedStorageManifestData@chrome://extensions/content/parent/ext-storage.js:104:20
+11-21 16:17:56.368  3540  3686 E GeckoConsole: get@chrome://extensions/content/parent/ext-storage.js:414:30
+11-21 16:17:56.368  3540  3686 E GeckoConsole: recvAPICall/result</</<@resource://gre/modules/ExtensionParent.sys.mjs:1315:16
+11-21 16:17:56.368  3540  3686 E GeckoConsole: withCallContextData@resource://gre/modules/ExtensionParent.sys.mjs:746:14
+11-21 16:17:56.368  3540  3686 E GeckoConsole: recvAPICall/result</<@resource://gre/modules/ExtensionParent.sys.mjs:1314:19
+11-21 16:17:56.368  3540  3686 E GeckoConsole: withPendingBrowser@resource://gre/modules/ExtensionParent.sys.mjs:756:26
+11-21 16:17:56.368  3540  3686 E GeckoConsole: recvAPICall/result<@resource://gre/modules/ExtensionParent.sys.mjs:1313:24
+11-21 16:17:56.368  3540  3686 E GeckoConsole: callAndLog@resource://gre/modules/ExtensionParent.sys.mjs:1266:14
+11-21 16:17:56.368  3540  3686 E GeckoConsole: recvAPICall@resource://gre/modules/ExtensionParent.sys.mjs:1312:25
+11-21 16:17:56.368  3540  3686 E GeckoConsole: showPrompt@resource://gre/
+11-21 16:17:56.371  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:56.371  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:56.371  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:56.371  3540  3686 E GeckoConsole: showPrompt@resource://gre/modules/GeckoViewPrompter.sys.mjs:142:19
+11-21 16:17:56.371  3540  3686 E GeckoConsole: confirmEx@resource://gre/modules/GeckoViewPrompt.sys.mjs:591:35
+11-21 16:17:56.371  3540  3686 E GeckoConsole: confirmCheck@resource://gre/modules/GeckoViewPrompt.sys.mjs:523:12
+11-21 16:17:56.371  3540  3686 E GeckoConsole: confirm@resource://gre/modules/GeckoViewPrompt.sys.mjs:517:17
+11-21 16:17:56.371  3540  3686 E GeckoConsole: onAddons/<@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.js:871:91
+11-21 16:17:56.371  3540  3686 E GeckoConsole: onAddons@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.js:871:9
+11-21 16:17:56.371  3540  3686 E GeckoConsole: @moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/bridge.js line 51 > eval:1:9
+11-21 16:17:56.371  3540  3686 E GeckoConsole: onNative@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/bridge.js:51:18
+11-21 16:17:56.371  3540  3686 E GeckoConsole: applySafeWithoutClone/<@resource://gre/modules/ExtensionCommon.sys.mjs:689:19
+11-21 16:17:56.371  3540  3686 E GeckoConsole: applySafeWithoutClone@resource://gre/mo
+11-21 16:17:56.372  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:56.372  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:56.372  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:56.372  3540  3686 E GeckoConsole: showPrompt@resource://gre/modules/GeckoViewPrompter.sys.mjs:142:19
+11-21 16:17:56.372  3540  3686 E GeckoConsole: confirmEx@resource://gre/modules/GeckoViewPrompt.sys.mjs:591:35
+11-21 16:17:56.372  3540  3686 E GeckoConsole: confirmCheck@resource://gre/modules/GeckoViewPrompt.sys.mjs:523:12
+11-21 16:17:56.372  3540  3686 E GeckoConsole: confirm@resource://gre/modules/GeckoViewPrompt.sys.mjs:517:17
+11-21 16:17:56.372  3540  3686 E GeckoConsole: onAddons/<@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.js:871:91
+11-21 16:17:56.372  3540  3686 E GeckoConsole: onAddons@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.js:871:9
+11-21 16:17:56.372  3540  3686 E GeckoConsole: @moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/bridge.js line 51 > eval:1:9
+11-21 16:17:56.372  3540  3686 E GeckoConsole: onNative@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/bridge.js:51:18
+11-21 16:17:56.372  3540  3686 E GeckoConsole: applySafeWithoutClone/<@resource://gre/modules/ExtensionCommon.sys.mjs:689:19
+11-21 16:17:56.372  3540  3686 E GeckoConsole: applySafeWithoutClone@resource://gre/mo
+11-21 16:17:56.375  3540  3686 I GeckoConsole: get managed failed Error: An unexpected error occurred
+11-21 16:17:56.380  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:OnReady
+11-21 16:17:56.395  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:17:56.395  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:17:56.395  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:17:56.395  3540  3686 E GeckoConsole: showPrompt@resource://gre/modules/GeckoViewPrompter.sys.mjs:142:19
+11-21 16:17:56.395  3540  3686 E GeckoConsole: confirmEx@resource://gre/modules/GeckoViewPrompt.sys.mjs:591:35
+11-21 16:17:56.395  3540  3686 E GeckoConsole: confirmCheck@resource://gre/modules/GeckoViewPrompt.sys.mjs:523:12
+11-21 16:17:56.395  3540  3686 E GeckoConsole: confirm@resource://gre/modules/GeckoViewPrompt.sys.mjs:517:17
+11-21 16:17:56.395  3540  3686 E GeckoConsole: onAddons/<@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.js:871:91
+11-21 16:17:56.395  3540  3686 E GeckoConsole: onAddons@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/chrome.js:871:9
+11-21 16:17:56.395  3540  3686 E GeckoConsole: @moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/bridge.js line 51 > eval:1:9
+11-21 16:17:56.395  3540  3686 E GeckoConsole: onNative@moz-extension://be69a989-f73a-4cb5-81aa-47fed5dfea46/bridge.js:51:18
+11-21 16:17:56.395  3540  3686 E GeckoConsole: applySafeWithoutClone/<@resource://gre/modules/ExtensionCommon.sys.mjs:689:19
+11-21 16:17:56.395  3540  3686 E GeckoConsole: applySafeWithoutClone@resource://gre/mo
+11-21 16:17:56.403  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:17:56.405  3540  3686 I GeckoConsole: Settings are loaded
+11-21 16:18:06.305  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:18:06.305  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:18:08.232  6067  6067 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-21 16:18:08.234  6067  6067 I AndroidRuntime: Using default boot image
+11-21 16:18:08.234  6067  6067 I AndroidRuntime: Leaving lock profiling enabled
+11-21 16:18:08.287  6067  6067 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-21 16:18:09.323  6067  6067 D AndroidRuntime: Shutting down VM
+11-21 16:18:10.208  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:10.208  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:10.208  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:10.240  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:10.240  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:10.240  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:10.285  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:10.285  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:10.285  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:10.853  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:10.853  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:10.853  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.311  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.311  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.311  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.330  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:18:13.342  3540  3540 D GeckoSession: handleMessage GeckoView:PageStart uri=about:blank
+11-21 16:18:13.342  3540  3540 D GeckoSession: handleMessage GeckoView:LocationChange uri=about:blank
+11-21 16:18:13.342  3540  3540 D GeckoSession: handleMessage GeckoView:PageStop uri=null
+11-21 16:18:13.354  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:18:13.357  3540  3540 D GeckoSession: handleMessage GeckoView:ProgressChanged uri=null
+11-21 16:18:13.357  3540  3540 D GeckoSession: handleMessage GeckoView:PageStart uri=https://fr.wikipedia.org/wiki/Lyon
+11-21 16:18:13.393  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.393  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.394  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.394  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.408  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.408  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.408  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.424  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.424  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.424  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.424  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.424  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.424  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.454  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.454  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.454  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.471  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.471  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.471  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.488  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.488  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.488  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.503  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.503  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.503  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.521  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.521  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.521  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.538  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.538  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.538  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.543  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.543  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.543  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.543  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:13.555  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.555  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.555  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.570  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.570  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.570  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.587  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.587  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.587  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.604  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.604  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.604  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.620  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.620  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.620  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.820  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.820  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.820  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.850  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.850  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.850  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.870  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.870  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.870  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.887  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.887  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.887  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.904  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.904  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.904  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.919  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.919  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.919  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.936  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.936  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.936  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.954  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.954  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.954  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.969  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.969  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.969  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:13.987  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:13.987  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:13.987  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:14.002  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:14.002  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:14.002  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:14.019  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:14.019  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:14.019  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:14.037  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:14.037  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:14.037  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:14.051  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:14.051  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:14.051  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:14.051  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:14.051  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:14.051  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:14.961  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=null, isEngineReady=false, hasVisibleChange=false}
+11-21 16:18:14.963  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:14.964  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:14.964  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=null, isEngineReady=false, hasVisibleChange=false}
+11-21 16:18:14.965  3540  3540 D GeckoSession: handleMessage GeckoView:LocationChange uri=https://fr.wikipedia.org/wiki/Lyon
+11-21 16:18:14.965  3540  3540 D GeckoSession: handleMessage GeckoView:SecurityChanged uri=null
+11-21 16:18:14.991  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:14.991  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:14.991  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:14.992  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:14.994  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:14.994  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:14.994  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:15.034  3540  3540 D WebExtension: handleMessage GeckoView:WebExtension:Connect
+11-21 16:18:15.141  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.141  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.141  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.141  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.200  3540  3540 D GeckoSession: handleMessage GeckoView:ProgressChanged uri=null
+11-21 16:18:15.206  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:15.206  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:15.206  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:15.373  3540  3540 D GeckoSession: handleMessage GeckoView:ProgressChanged uri=null
+11-21 16:18:15.376  3540  3540 D GeckoSession: handleMessage GeckoView:PageStop uri=null
+11-21 16:18:15.381  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=DetectedLanguages {userLangTag='en', isDocLangTagSupported=true, docLangTag='fr'}, isEngineReady=false, hasVisibleChange=false}
+11-21 16:18:15.383  3540  3540 I AIRNavig: traduction : TranslationState {requestedTranslationPair=null, error='null', detectedLanguages=DetectedLanguages {userLangTag='en', isDocLangTagSupported=true, docLangTag='fr'}, isEngineReady=false, hasVisibleChange=false}
+11-21 16:18:15.385  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.385  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.385  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.385  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:15.868  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:15.868  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:15.868  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:15.868  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:15.868  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:15.868  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:15.888  3540  3686 I GeckoConsole: [JavaScript Error: "Referrer Policy: Ignoring the less restricted referrer policy “origin-when-cross-origin” for the cross-site request: https://auth.wikimedia.org/metawiki/wiki/Special:CentralAutoLogin/checkLoggedIn?useformat=mobile&wikiid=frwiki&usesul3=1&type=script" {file: "https://auth.wikimedia.org/metawiki/wiki/Special:CentralAutoLogin/checkLoggedIn?useformat=mobile&wikiid=frwiki&usesul3=1&type=script" line: 0}]
+11-21 16:18:15.894  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:15.894  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:15.894  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:15.937  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:15.937  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:15.937  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:15.970  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:15.970  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:15.970  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.021  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.021  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.021  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.021  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.021  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.021  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.070  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.070  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.070  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.071  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.071  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.071  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.110  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.110  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.110  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.111  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.111  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.111  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.111  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.111  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.111  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.117  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.117  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.117  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.136  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.136  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.136  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.150  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.150  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.150  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.163  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.163  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.163  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.194  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.194  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.194  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.197  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.197  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.197  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.215  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.215  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.215  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.230  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.230  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.230  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.247  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.247  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.247  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:16.264  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:16.264  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:16.264  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:17.008  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:17.008  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:20.264  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:18:25.156  3540  3540 D GeckoSession: handleMessage GeckoView:StateUpdated uri=null
+11-21 16:18:34.610  3540  3540 D GeckoSession: handleMessage GeckoView:LocationChange uri=moz-extension://dda09b26-1daa-456f-8206-50c82e887773/popup-fenix.html
+11-21 16:18:34.611  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:34.611  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:34.635  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.635  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.635  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.641  3540  3686 E GeckoConsole: [JavaScript Error: "Unknown localization message " {file: "moz-extension://dda09b26-1daa-456f-8206-50c82e887773/js/i18n.js" line: 30}]
+11-21 16:18:34.641  3540  3686 E GeckoConsole: i18n$@moz-extension://dda09b26-1daa-456f-8206-50c82e887773/js/i18n.js:30:33
+11-21 16:18:34.641  3540  3686 E GeckoConsole: i18n.render@moz-extension://dda09b26-1daa-456f-8206-50c82e887773/js/i18n.js:252:31
+11-21 16:18:34.641  3540  3686 E GeckoConsole: @moz-extension://dda09b26-1daa-456f-8206-50c82e887773/js/i18n.js:346:10
+11-21 16:18:34.684  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.684  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.684  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.685  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.685  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.685  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.685  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.685  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.685  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.688  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.688  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.688  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.705  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.705  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.705  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.708  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:34.709  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:34.709  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:34.709  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:34.731  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.731  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.731  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:34.757  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:34.757  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:34.757  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:44.632  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:18:47.367  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:47.367  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:BrowserAction:Update
+11-21 16:18:47.538  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
+11-21 16:18:54.008  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:18:54.008  3540  3540 D WebExtension: handleMessage GeckoView:BrowserAction:Update
+11-21 16:18:54.022  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.022  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.022  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:54.028  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.028  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.028  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:54.068  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.068  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.068  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:54.117  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.117  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.117  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:54.316  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.316  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.316  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:54.535  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.535  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.535  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:18:54.852  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:18:54.852  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:18:54.852  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:19:01.115  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:19:01.115  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:19:01.115  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:19:01.142  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:19:01.142  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:19:01.142  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:19:01.160  3540  3686 E GeckoConsole: receiveMessage@chrome://geckoview/content/geckoview.js:414:13
+11-21 16:19:01.160  3540  3686 E GeckoConsole: onMessageFromActor@chrome://geckoview/content/geckoview.js:229:41
+11-21 16:19:01.160  3540  3686 E GeckoConsole: receiveMessage@resource://gre/modules/GeckoViewActorParent.sys.mjs:40:38
+11-21 16:19:04.081  3540  3686 W GeckoEventDispatcher: No listener for GeckoView:StateUpdated
