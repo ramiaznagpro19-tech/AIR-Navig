@@ -22,7 +22,7 @@ A logcat -c
 A shell am start -n app.airnavig/.MainActivity
 sleep 35
 shot 01-demarrage
-for x in ublock-origin duckduckgo-for-firefox darkreader; do
+for x in ublock-origin duckduckgo-for-firefox; do
   T "install:https://addons.mozilla.org/firefox/downloads/latest/$x/latest.xpi"; sleep 25
   tap_text "Ajouter" || tap_text "AJOUTER"; sleep 12
   tap_text "Oui"; sleep 2
@@ -30,7 +30,7 @@ done
 shot 11-extensions-installees
 V "https://fr.wikipedia.org/wiki/Lyon"; sleep 20
 shot 12-logos-barre
-T "tapext:2"; sleep 10
+T "tapext:1"; sleep 12
 shot 13-fenetre-extension
 A shell input keyevent KEYCODE_BACK; sleep 3
 A shell input swipe 600 1530 300 1530 300; sleep 2
