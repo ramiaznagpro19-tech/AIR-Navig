@@ -440,6 +440,7 @@ function drawMenu(){
     ['pip','Vidéo en incrustation',false,()=>{collapse();A('pip')}],
     ['lockk','Mots de passe',false,()=>{collapse();A('passwords')}],
     ['puzzle','Extensions',false,()=>show('addons')],
+    ['shield','Tester ce site',false,()=>{collapse();if(/^https?:/i.test(st.url))A('probe',st.url);else notice('Ouvre un site web pour le tester')}],
     ['key','Autorisations',false,()=>show('perms')],
     ['trash','Effacer données',false,()=>{A('clear');notice('Cookies, cache et données des sites effacés');collapse()}]
   ];
@@ -481,6 +482,8 @@ function drawShield(){
     if(e.type==='block'){html='<b>'+esc(e.who)+'</b> a voulu '+esc(e.what)+' sur <b>'+esc(e.site)+'</b> → bloqué<small>'+esc(e.host)+' · '+ago(e.t)+'</small>'}
     else if(e.type==='clean'){cls='clean';ic=ICON.link;html='Lien vers <b>'+esc(e.site)+'</b> nettoyé : '+e.rm.length+' code(s) de suivi retiré(s)<small>'+esc(e.rm.join(', '))+' · '+ago(e.t)+'</small>'}
     else if(e.type==='iso'){cls='iso';ic=ICON.warn;html='<b>'+esc(e.site)+'</b> bloqué : site dangereux<small>'+esc((e.reasons||[]).join(' '))+' · '+ago(e.t)+'</small>'}
+    else if(e.type==='probe'){cls=e.score>=3?'iso':'clean';ic=e.score>=3?ICON.warn:ICON.shield;html='<b>'+esc(e.site)+'</b> testé en conditions réelles : '+(e.score>=3?'dangereux, bloqué':'ouvert')+'<small>'+esc((e.reasons||[]).slice(0,3).join(' '))+' · '+ago(e.t)+'</small>'}
+    else if(e.type==='scam'){cls='iso';ic=ICON.warn;html='<b>'+esc(e.site)+'</b> affichait un message d’arnaque<small>'+esc((e.reasons||[])[0]||'')+' · '+ago(e.t)+'</small>'}
     else if(e.type==='sandbox'){cls='clean';ic=ICON.box;html='<b>'+esc(e.site)+'</b> ouvert dans le bac à sable<small>'+ago(e.t)+'</small>'}
     else if(e.type==='perm'){ic=ICON.key;html=(e.what==='refusé'?'Accès refusé à <b>':'Accès '+esc(e.what)+' donné à <b>')+esc(e.site)+'</b><small>'+ago(e.t)+'</small>'}
     else if(e.type==='purge'){cls='iso';ic=ICON.x;html='Données de <b>'+esc(e.site)+'</b> effacées en quittant le site<small>'+ago(e.t)+'</small>'}
@@ -629,7 +632,8 @@ function drawProt(){
   ));
   b.append(head('Autres protections'),card(
     swRow('Nettoyer les liens piégés','Retire les codes de suivi (utm, fbclid, gclid…) des adresses.',()=>set.clean,v=>{set.clean=v;saveSet();drawProt()}),
-    swRow('Bloquer les sites dangereux','Imitations de marques, adresses cachées, lettres déguisées. Ouvrables quand même dans le bac à sable.',()=>set.autoIso,v=>{set.autoIso=v;saveSet();drawProt()}),
+    swRow('Bloquer les sites dangereux','Imitations de marques, adresses cachées, lettres déguisées, et sites qui se comportent mal pendant le test. Ouvrables quand même dans le bac à sable.',()=>set.autoIso,v=>{set.autoIso=v;saveSet();drawProt()}),
+    probeRow(),
     swRow('Mode discret','N’affiche plus de message quand un lien est nettoyé.',()=>set.prot.quiet,v=>{set.prot.quiet=v;saveSet()}),
     swRow('Compteur du bouclier dans la barre','Affiche le nombre de traqueurs bloqués sur la page.',()=>!set.look.hide.shield,v=>{set.look.hide.shield=!v;saveSet();applyLook()})
   ));
@@ -888,6 +892,77 @@ function drawAddonsList(){
     const d=el('button','btn red','Supprimer');d.onclick=()=>A('addons',JSON.stringify({op:'remove',id:x.id}));r.append(d);
     c.append(r);b.append(c)});
 }
+
+
+/* ===== Test des sites en conditions réelles =====
+ * Un lien ne suffit pas à juger un site : avant d'ouvrir un site douteux (ou tout nouveau site, selon le réglage),
+ * AIR Navig le charge « pour de faux » dans une sonde cachée et isolée, sans aucune autorisation, et regarde ce qu'il
+ * essaie de faire. La page ne s'exécute dans ton onglet qu'après le verdict. */
+if(!['suspect','new','off'].includes(set.probe))set.probe='suspect';
+function isOfficial(b,h){return BRANDS[b].some(d=>h===d||h.endsWith('.'+d))||(b==='google'&&/(^|\.)google\.[a-z.]+$/.test(h))||(b==='amazon'&&/(^|\.)amazon\.[a-z.]+$/.test(h))}
+function visited(h){h=(h||'').replace(/^www\./,'');const m=x=>{const y=host(x.url).replace(/^www\./,'');return y===h};return history.some(m)||bookmarks.some(m)}
+function checkNav(id,url,redirect){
+  const reply=(v,extra)=>A('navcheck',JSON.stringify(Object.assign({id,v},extra||{})));
+  if(!set.autoIso||!/^https?:/i.test(url))return reply('allow');
+  const h=host(url);if(!h||siteAllowed(h)||isLocalHost(h))return reply('allow');
+  const r=assess(url);
+  if(r.score>=3){blockSite(url,r.reasons);return reply('block')}
+  if(set.probe==='off')return reply('allow');
+  if(r.score>=1||(set.probe==='new'&&!visited(h))){PROBES[id]={url,link:r};return reply('probe')}
+  reply('allow');
+}
+const PROBES={};
+function onProbeStart(h){notice('🔬 Test de '+h+' en conditions réelles…')}
+/* Ce que le site a tenté pendant le test → raisons et score */
+function judge(f,link){
+  const r=[],add=(n,t)=>{score+=n;r.push(t)};let score=link?Math.min(link.score,2):0;
+  if(link)link.reasons.forEach(x=>r.push(x));
+  const sc=f.scan||{};const fh=host(f.final||f.url);
+  if(f.hosts&&f.hosts.length>2&&f.redirects>=2)add(1,'Il t’a renvoyé de site en site ('+f.hosts.join(' → ')+').');
+  if(fh&&fh!==host(f.url)){const a=assess(f.final);if(a.score>0){score+=a.score;a.reasons.forEach(x=>r.push('Destination finale ('+fh+') : '+x))}}
+  if(f.apps&&f.apps.length)add(2,'Il a essayé d’ouvrir une autre appli tout seul ('+f.apps.join(', ')+':).');
+  if(f.popups>=3)add(2,'Il a essayé d’ouvrir '+f.popups+' fenêtres sans que tu cliques.');else if(f.popups>0)add(1,'Il a essayé d’ouvrir une fenêtre sans que tu cliques.');
+  if(f.apk)add(3,'Il a essayé de télécharger une appli tout seul ('+(f.downloads||[]).join(', ')+').');else if(f.downloads&&f.downloads.length)add(2,'Il a lancé un téléchargement tout seul ('+f.downloads.join(', ')+').');
+  if(f.fullscreen)add(2,'Il a voulu passer en plein écran tout seul (technique des fausses alertes).');
+  if(f.alerts>=2)add(2,'Il affiche des fenêtres d’alerte en boucle ('+f.alerts+').');else if(f.alerts===1&&sc.scam&&sc.scam.length)add(1,'Il affiche une fenêtre d’alerte dès l’ouverture.');
+  if(f.beforeUnload)add(2,'Il essaie de t’empêcher de quitter la page.');
+  if(f.perms&&f.perms.length)add(f.perms.length>1?2:1,'Il réclame dès l’ouverture : '+f.perms.join(', ')+'.');
+  if(sc.scam&&sc.scam.length)add(3,'Il affiche un message typique d’arnaque : '+sc.scam[0]+'.');
+  const title=(sc.title||'').toLowerCase();let brand=null;
+  for(const b in BRANDS){if(b.length>=4&&title.includes(b)&&!isOfficial(b,fh)){brand=b;break}}
+  if(sc.pw>0&&brand)add(3,'Il affiche une page de connexion « '+brand+' » alors que ce n’est pas le site officiel.');
+  else if(sc.pw>0&&sc.crossPw)add(2,'Son formulaire envoie ton mot de passe vers un autre site.');
+  if(sc.pw>0&&sc.https===false)add(2,'Il demande un mot de passe sur une connexion non chiffrée.');
+  if(sc.card>0&&(brand||score>0||sc.https===false))add(2,'Il demande ton numéro de carte bancaire.');
+  return{score,reasons:r};
+}
+function probeVerdict(id,f){
+  const p=PROBES[id]||{url:f.url,link:assess(f.url)};delete PROBES[id];
+  const h=host(f.url);
+  if(f.error){A('probeverdict',JSON.stringify({id,ok:true,host:h}));return}
+  const j=judge(f,p.link);
+  addLog({type:'probe',site:h,score:j.score,reasons:j.reasons});
+  if(j.score>=3){
+    A('probeverdict',JSON.stringify({id,ok:false,host:h}));
+    blockSite(f.url,['Pendant le test en conditions réelles :'].concat(j.reasons));
+  }else{
+    A('probeverdict',JSON.stringify({id,ok:true,host:h}));
+    notice(j.score>0?'Testé : rien de dangereux, mais prudence ('+j.reasons[j.reasons.length-1]+')':'✓ '+h+' testé : aucun comportement dangereux');
+  }
+}
+/* Test à la demande (menu ⋯ › Tester ce site) */
+function probeReport(f){const j=judge(f,assess(f.url));const h=host(f.url);
+  if(j.score>=3)alert('⚠ '+h+' est dangereux :\n\n• '+j.reasons.join('\n• '));
+  else if(j.reasons.length)alert(h+' : rien de dangereux détecté.\n\nÀ savoir :\n• '+j.reasons.join('\n• '));
+  else notice('✓ '+h+' testé : aucun comportement dangereux')}
+/* Mise en garde en direct : la page ouverte affiche un message d'arnaque */
+let scamWarned='';
+function onScamWarn(sc){const h=host(st.url);if(!sc||!sc.scam||!sc.scam.length||scamWarned===h||siteAllowed(h))return;scamWarned=h;
+  addLog({type:'scam',site:h,reasons:sc.scam});
+  if(confirm('⚠ Attention : cette page affiche un message typique d’arnaque.\n\n'+sc.scam[0]+'\n\nNe donne aucune information et n’appelle aucun numéro. Quitter la page ?')){if(st.back)A('back');else A('go',homeUrl())}}
+function probeRow(){const r=el('div','set','<span class="t">Tester les sites avant de les ouvrir<small>Le site est d’abord chargé en cachette, isolé et sans aucune autorisation, pour voir ce qu’il essaie de faire.</small></span>');
+  const s=document.createElement('select');s.style.cssText='max-width:46%;padding:8px;border-radius:10px;background:var(--bar2);color:var(--text);border:1px solid var(--line)';
+  s.innerHTML='<option value="suspect">Sites douteux</option><option value="new">Tous les nouveaux sites</option><option value="off">Jamais</option>';s.value=set.probe;s.onchange=()=>{set.probe=s.value;saveSet()};r.append(s);return r}
 
 /* ===== Démarrage ===== */
 applySettings();

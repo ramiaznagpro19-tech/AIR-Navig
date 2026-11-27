@@ -116,6 +116,17 @@ public class SandboxActivity extends Activity {
                     return null;
                 }
             });
+            session.setProgressDelegate(new GeckoSession.ProgressDelegate() {
+                @Override
+                public void onPageStart(@NonNull GeckoSession s, @NonNull String u) {
+                    android.util.Log.i("AIRNavig", "bac à sable : début " + u);
+                }
+
+                @Override
+                public void onPageStop(@NonNull GeckoSession s, boolean ok) {
+                    android.util.Log.i("AIRNavig", "bac à sable : fin, réussi=" + ok);
+                }
+            });
             session.setPermissionDelegate(new GeckoSession.PermissionDelegate() {
                 @Override
                 public void onAndroidPermissionsRequest(@NonNull GeckoSession s, @Nullable String[] perms, @NonNull Callback cb) {
@@ -171,6 +182,7 @@ public class SandboxActivity extends Activity {
             });
             session.open(Engine.runtime);
             view.setSession(session);
+            android.util.Log.i("AIRNavig", "bac à sable : ouverture " + url);
             session.loadUri(url);
         });
     }

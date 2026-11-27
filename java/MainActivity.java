@@ -1087,6 +1087,20 @@ public class MainActivity extends Activity {
                 case "translate":
                     translateCmd(a);
                     break;
+                case "navcheck":
+                    onNavCheck(new JSONObject(a));
+                    break;
+                case "probeverdict":
+                    onProbeVerdict(new JSONObject(a));
+                    break;
+                case "probe": {
+                    // Tester un site à la demande (menu) sans l'ouvrir.
+                    final String u = a;
+                    if (!u.startsWith("http://") && !u.startsWith("https://")) break;
+                    call("onProbeStart", Uri.parse(u).getHost());
+                    Probe.run(this, u, facts -> toJs("window.probeReport&&probeReport(" + facts.toString() + ")"));
+                    break;
+                }
                 case "find":
                     if (content != null && !a.isEmpty()) content.getFinder().find(a, 0);
                     break;
@@ -1430,6 +1444,8 @@ public class MainActivity extends Activity {
                 case "https":
                 case "http":
                     // HTTPS en priorité : Gecko essaie d'abord https:// et revient seul en http:// si besoin.
+                    // Vers un autre site : l'interface décide (ouvrir, bloquer, ou tester le site d'abord).
+                    if (t == cur && needsCheck(t, url)) return checkNav(t, url, r.isRedirect);
                     return GeckoResult.allow();
                 case "moz-extension":
                     if (isOtherExtension(url)) return GeckoResult.allow();
@@ -1524,6 +1540,93 @@ public class MainActivity extends Activity {
     private static String stripHash(String u) {
         int i = u.indexOf('#');
         return i < 0 ? u : u.substring(0, i);
+    }
+
+    /* ======================= Test des sites avant ouverture ======================= */
+
+    private static final class PendingNav {
+        final Tab t;
+        final String url;
+        final GeckoResult<AllowOrDeny> res;
+        Runnable timeout;
+
+        PendingNav(Tab t, String url, GeckoResult<AllowOrDeny> res) {
+            this.t = t;
+            this.url = url;
+            this.res = res;
+        }
+    }
+
+    private final Map<String, PendingNav> pendingNav = new HashMap<>();
+    /** Sites testés sans problème pendant cette session de l'appli. */
+    private final Set<String> testedOk = Collections.synchronizedSet(new HashSet<String>());
+    private int navSeq;
+
+    private boolean needsCheck(Tab t, String url) {
+        if (!uiReady || uiPort == null) return false;
+        String h = Uri.parse(url).getHost();
+        if (h == null) return false;
+        h = h.toLowerCase(Locale.ROOT);
+        if (isPrivateHost(h) || testedOk.contains(h)) return false;
+        if (h.endsWith(".translate.goog") || h.startsWith("translate.google.")) return false;
+        String fh = Uri.parse(t.url == null ? "" : t.url).getHost();
+        return fh == null || !fh.equalsIgnoreCase(h);
+    }
+
+    private GeckoResult<AllowOrDeny> checkNav(Tab t, String url, boolean redirect) {
+        final String id = "c" + (navSeq++);
+        final GeckoResult<AllowOrDeny> res = new GeckoResult<>();
+        final PendingNav p = new PendingNav(t, url, res);
+        pendingNav.put(id, p);
+        // L'interface ne répond pas à temps : on laisse passer (jamais de page bloquée par erreur).
+        p.timeout = () -> resolveNav(id, true);
+        ui.postDelayed(p.timeout, 2500);
+        toJs("window.checkNav?checkNav(" + JSONObject.quote(id) + "," + JSONObject.quote(url) + "," + redirect + ")"
+                + ":A('navcheck',JSON.stringify({id:" + JSONObject.quote(id) + ",v:'allow'}))");
+        return res;
+    }
+
+    private void resolveNav(String id, boolean allow) {
+        PendingNav p = pendingNav.remove(id);
+        if (p == null) return;
+        if (p.timeout != null) ui.removeCallbacks(p.timeout);
+        p.res.complete(allow ? AllowOrDeny.ALLOW : AllowOrDeny.DENY);
+    }
+
+    /** Réponse de l'interface : {id, v: allow | block | probe}. */
+    private void onNavCheck(JSONObject m) {
+        final String id = m.optString("id");
+        final PendingNav p = pendingNav.get(id);
+        if (p == null) return;
+        switch (m.optString("v")) {
+            case "block":
+                resolveNav(id, false);
+                break;
+            case "probe": {
+                if (p.timeout != null) ui.removeCallbacks(p.timeout);
+                final String host = Uri.parse(p.url).getHost();
+                call("onProbeStart", host == null ? p.url : host);
+                p.timeout = () -> resolveNav(id, true);
+                ui.postDelayed(p.timeout, 16_000);
+                Probe.run(this, p.url, facts -> {
+                    if (!pendingNav.containsKey(id)) return;
+                    toJs("window.probeVerdict?probeVerdict(" + JSONObject.quote(id) + "," + facts.toString() + ")"
+                            + ":A('probeverdict',JSON.stringify({id:" + JSONObject.quote(id) + ",ok:true}))");
+                });
+                break;
+            }
+            default:
+                resolveNav(id, true);
+        }
+    }
+
+    /** Verdict après le test : {id, ok, host}. */
+    private void onProbeVerdict(JSONObject m) {
+        String id = m.optString("id");
+        boolean ok = m.optBoolean("ok", true);
+        String h = m.optString("host", "");
+        if (ok && !h.isEmpty()) testedOk.add(h.toLowerCase(Locale.ROOT));
+        resolveNav(id, ok);
     }
 
     private void tabInfo(Tab t) {
@@ -1748,6 +1851,12 @@ public class MainActivity extends Activity {
                         String l = m.optString("lang", "").trim();
                         t.pageLang = l.matches("[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,8})*") ? l.replace('_', '-') : null;
                         maybeOffer(t);
+                    }
+                    if (m.has("scan") && t == cur) {
+                        JSONObject sc = m.optJSONObject("scan");
+                        if (sc != null && sc.optJSONArray("scam") != null && sc.optJSONArray("scam").length() > 0) {
+                            toJs("window.onScamWarn&&onScamWarn(" + sc.toString() + ")");
+                        }
                     }
                     if (m.has("readerable")) {
                         t.readerable = m.optBoolean("readerable");
@@ -2375,6 +2484,59 @@ public class MainActivity extends Activity {
         Engine.front = this;
         Passwords.privateFront = incognito();
         if (content != null) content.setActive(true);
+    }
+
+    /** Appli quittée : les sites sont en pause tout de suite, puis libérés de la mémoire (sauf vidéo/musique en cours). */
+    private final Runnable backgroundTrim = () -> {
+        int freed = 0;
+        for (Tab t : tabs.values()) {
+            if (t.s == null || t.playing) continue;
+            if (t == cur) {
+                try {
+                    contentView.releaseSession();
+                } catch (Throwable ignored) {
+                }
+                content = null;
+            }
+            try {
+                t.s.close();
+            } catch (Throwable ignored) {
+            }
+            t.s = null;
+            freed++;
+        }
+        Log.i(TAG, "arrière-plan : " + freed + " onglet(s) libéré(s) de la mémoire");
+    };
+    private boolean backgrounded;
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        boolean pip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode();
+        if (isChangingConfigurations() || pip) return;
+        backgrounded = true;
+        for (Tab t : tabs.values()) {
+            if (t.s != null && !t.playing) t.s.setActive(false);
+        }
+        ui.removeCallbacks(backgroundTrim);
+        ui.postDelayed(backgroundTrim, 60_000);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        ui.removeCallbacks(backgroundTrim);
+        if (!backgrounded) return;
+        backgrounded = false;
+        // Retour dans l'appli : l'onglet affiché se réveille là où il en était.
+        if (cur != null && cur.s == null) {
+            Tab t = cur;
+            cur = null;
+            content = null;
+            switchTab(t.id, t.url);
+        } else if (cur != null) {
+            cur.s.setActive(true);
+        }
     }
 
     @Override

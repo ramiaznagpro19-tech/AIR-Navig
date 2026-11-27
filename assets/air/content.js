@@ -89,6 +89,7 @@
       port = p;
       p.onMessage.addListener((m) => {
         if (m && m.reader) toggleReader(m.reader);
+        if (m && m.probe) { setTimeout(sendScan, 800); setTimeout(sendScan, 2000); }
       });
       p.onDisconnect.addListener(() => {
         if (port === p) port = null;
@@ -243,7 +244,41 @@
   }
 
   function report() { send({ readerable: readerable(), lang: (document.documentElement.getAttribute('lang') || '').slice(0, 20) }); }
+
+  /* Analyse de la page pour le test des sites : ce que la page affiche et demande (rien n'est envoyé hors du téléphone). */
+  const SCAM = [
+    [/(votre|ton|your)\s+(appareil|t[ée]l[ée]phone|smartphone|ordinateur|pc|mobile|device|phone|computer|android|iphone)\s+(est|a [ée]t[ée]|is|has been)\s+(infect|compromis|pirat|hack|endommag|damaged)/i, 'fausse alerte : « ton appareil est infecté »'],
+    [/\b\d+\s+virus\b|virus\s+(d[ée]tect|found|detected)/i, 'fausse alerte virus'],
+    [/(f[ée]licitations|congratulations|bravo).{0,80}(gagn|won|winner|s[ée]lectionn|selected|r[ée]compense|reward|iphone|samsung)/i, 'faux gain (« tu as gagné »)'],
+    [/(compte|account|carte|card).{0,40}(suspendu|bloqu[ée]|d[ée]sactiv|suspended|locked|limited|restricted)/i, '« compte bloqué » (technique d’hameçonnage)'],
+    [/(appelez|appeler|call|contact).{0,50}(support|assistance|microsoft|apple|windows|technicien|technician)/i, 'faux support technique'],
+    [/(colis|package|parcel|livraison|delivery).{0,80}(frais|fee|douane|customs|en attente|on hold|pay)/i, 'faux colis à payer'],
+    [/(mettre [àa] jour|mise [àa] jour|update)\s+(votre|ton|your)?\s*(navigateur|chrome|browser|t[ée]l[ée]phone|phone|flash).{0,40}(maintenant|now|imm[ée]diatement|urgent)/i, 'fausse mise à jour urgente'],
+    [/(crypto|bitcoin|btc|usdt).{0,60}(doubl|x2|gratuit|free|giveaway|airdrop)/i, 'arnaque aux cryptomonnaies'],
+  ];
+  function scanPage() {
+    try {
+      const inputs = [...document.querySelectorAll('input')];
+      const pw = inputs.filter((i) => i.type === 'password');
+      const card = inputs.filter((i) => /cc-(number|csc|exp)/i.test(i.autocomplete || '') || /(card.?num|cardnumber|num.?carte|carte.?bancaire|cvv|cvc|cryptogramme|expir)/i.test((i.name || '') + ' ' + (i.id || '') + ' ' + (i.placeholder || '')));
+      let crossPw = false;
+      pw.forEach((i) => {
+        const f = i.form;
+        if (!f || !f.action) return;
+        try { const h = new URL(f.action, location.href).hostname; if (h && h !== location.hostname && !h.endsWith('.' + location.hostname.split('.').slice(-2).join('.'))) crossPw = true; } catch (e) { /* adresse illisible */ }
+      });
+      const text = (document.body ? document.body.innerText : '').slice(0, 30000);
+      const scam = [];
+      SCAM.forEach(([re, label]) => { const m = text.match(re); if (m && scam.length < 4) scam.push(label + ' — « ' + m[0].slice(0, 90).replace(/\s+/g, ' ') + ' »'); });
+      return { pw: pw.length, card: card.length, crossPw: crossPw, title: (document.title || '').slice(0, 200), scam: scam, host: location.hostname, https: location.protocol === 'https:' };
+    } catch (e) {
+      return null;
+    }
+  }
+  function sendScan() { const r = scanPage(); if (r) send({ scan: r }); }
   connect();
+  if (document.readyState === 'complete') setTimeout(sendScan, 1200);
+  else window.addEventListener('load', () => setTimeout(sendScan, 1200), { once: true });
   window.addEventListener('pageshow', (e) => { if (e.persisted) { connect(); setTimeout(report, 200); } });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !port) { connect(); report(); } });
   if (document.readyState === 'complete') setTimeout(report, 300);

@@ -22,6 +22,18 @@ A logcat -c
 A shell am start -n app.airnavig/.MainActivity
 sleep 35
 shot 01-demarrage
+T "sandbox:https://fr.wikipedia.org/wiki/Marseille"; sleep 20
+shot 01b-bac-a-sable
+A shell input keyevent KEYCODE_BACK; sleep 3
+A shell input keyevent KEYCODE_BACK; sleep 3
+A shell am start -n app.airnavig/.MainActivity; sleep 4
+V "http://neverssl.com/"; sleep 4
+shot 01c-test-en-cours
+sleep 14
+shot 01d-test-fini
+A shell input keyevent KEYCODE_HOME; sleep 70
+A shell am start -n app.airnavig/.MainActivity; sleep 8
+shot 01e-retour-apres-pause
 V "https://fr.wikipedia.org/wiki/Paris"; sleep 30
 shot 02-wikipedia
 T "show:tabs"; sleep 6
