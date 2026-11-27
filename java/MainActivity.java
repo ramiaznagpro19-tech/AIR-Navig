@@ -1330,7 +1330,29 @@ public class MainActivity extends Activity {
      * donc tout le contenu doit être dans la page elle-même.
      */
     String errorPage(String kind, String url) {
+        return errorHtml(kind, url, lightUi, false);
+    }
+
+    /** Type de page d'erreur selon l'erreur Gecko. */
+    static String errorKind(WebRequestError error, String url) {
+        boolean local = isPrivateHost(Uri.parse(url == null ? "" : url).getHost());
+        if (error.category == WebRequestError.ERROR_CATEGORY_SAFEBROWSING) {
+            return error.code == WebRequestError.ERROR_SAFEBROWSING_PHISHING_URI ? "phishing" : "malware";
+        }
+        if (error.code == WebRequestError.ERROR_SECURITY_BAD_CERT || error.code == WebRequestError.ERROR_SECURITY_SSL) return local ? "local" : "ssl";
+        if (error.code == WebRequestError.ERROR_OFFLINE) return "offline";
+        if (error.code == WebRequestError.ERROR_UNKNOWN_HOST && !local) return "dns";
+        return local ? "local" : "net";
+    }
+
+    static String errorHtml(String kind, String url, boolean lightUi, boolean sandbox) {
         String[][] T = {
+            {"phishing", "Site d’hameçonnage", "Ce site est connu pour voler des mots de passe ou des cartes bancaires",
+                "Il figure sur la liste des sites frauduleux tenue par Google Safe Browsing et Mozilla.|Il imite souvent une banque, une administration, un réseau social ou un service de livraison.|Par sécurité, il ne s’ouvre nulle part, même dans le bac à sable.",
+                "Si tu as déjà saisi un mot de passe sur ce site, change-le tout de suite."},
+            {"malware", "Site malveillant", "Ce site est connu pour diffuser des logiciels dangereux",
+                "Il figure sur la liste des sites dangereux tenue par Google Safe Browsing et Mozilla.|Il peut essayer d’installer des applis espionnes ou de faux antivirus.|Par sécurité, il ne s’ouvre nulle part, même dans le bac à sable.",
+                "N’installe aucune appli proposée par ce site."},
             {"ssl", "Certificat non valide", "AIR Navig a coupé la connexion",
                 "Le certificat de sécurité de ce site est expiré, mal configuré ou falsifié.|Quelqu’un pourrait essayer d’intercepter ce que tu envoies (mots de passe, cartes…).|Par sécurité, AIR Navig ne permet pas de contourner cette erreur.",
                 "Si c’est ton propre site, corrige son certificat (ex. Let’s Encrypt). Sinon, réessaie plus tard."},
@@ -1354,11 +1376,12 @@ public class MainActivity extends Activity {
         boolean light = lightUi;
         StringBuilder li = new StringBuilder();
         for (String r : t[3].split("\\|")) li.append("<li>").append(html(r)).append("</li>");
-        String retry = u.startsWith("http://") || u.startsWith("https://") || u.startsWith("file:")
+        boolean blocked = "phishing".equals(kind) || "malware".equals(kind);
+        String retry = !blocked && (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("file:"))
                 ? "<a class=\"btn safe\" href=\"" + html(u) + "\">Réessayer</a>" : "";
         String http = "https".equals(kind) && u.startsWith("http://")
                 ? "<a class=\"btn warn\" href=\"air://insecure?u=" + html(Uri.encode(u)) + "\">Continuer en HTTP (non chiffré)</a>" : "";
-        boolean red = "ssl".equals(kind) || "https".equals(kind);
+        boolean red = "ssl".equals(kind) || "https".equals(kind) || blocked;
         String doc = "<!doctype html><html lang=\"fr\" class=\"" + (light ? "light" : "") + "\"><head><meta charset=\"utf-8\">"
                 + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>" + html(t[1]) + "</title><style>"
                 + "*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,Roboto,sans-serif}"
@@ -1380,7 +1403,7 @@ public class MainActivity extends Activity {
                     : "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v6M12 16h.01\"/>") + "</svg></div>"
                 + "<h1>" + html(t[1]) + "</h1><div class=\"host\">" + html(host == null ? u : host) + "</div>"
                 + "<div class=\"card\"><b>" + html(t[2]) + "</b><ul>" + li + "</ul></div>"
-                + "<div class=\"btns\">" + retry + http + "<a class=\"btn home\" href=\"air://home\">Page d’accueil</a></div>"
+                + "<div class=\"btns\">" + retry + http + (sandbox ? "" : "<a class=\"btn home\" href=\"air://home\">Page d’accueil</a>") + "</div>"
                 + "<div class=\"note\">" + html(t[4]) + "</div></body></html>";
         return "data:text/html;charset=utf-8;base64," + Base64.encodeToString(doc.getBytes(StandardCharsets.UTF_8), Base64.NO_WRAP);
     }
@@ -1516,22 +1539,11 @@ public class MainActivity extends Activity {
         @Override
         public GeckoResult<String> onLoadError(@NonNull GeckoSession s, @Nullable String uri, @NonNull WebRequestError error) {
             String url = uri == null ? "" : uri;
-            String kind;
-            boolean local = isPrivateHost(Uri.parse(url).getHost());
-            if (error.code == WebRequestError.ERROR_SECURITY_BAD_CERT || error.code == WebRequestError.ERROR_SECURITY_SSL) {
-                kind = local ? "local" : "ssl";
-                if (t == cur && !local) call("onNotice", "Certificat non valide : connexion bloquée");
-            } else if (error.code == WebRequestError.ERROR_OFFLINE) {
-                kind = "offline";
-            } else if (error.code == WebRequestError.ERROR_UNKNOWN_HOST && !local) {
-                kind = "dns";
-            } else if (local) {
-                kind = "local";
-                // Un serveur local en http:// essayé d'abord en https:// : on affiche l'adresse http.
-                if (url.startsWith("https://")) url = "http://" + url.substring(8);
-            } else {
-                kind = "net";
-            }
+            String kind = errorKind(error, url);
+            if ("ssl".equals(kind) && t == cur) call("onNotice", "Certificat non valide : connexion bloquée");
+            if (("phishing".equals(kind) || "malware".equals(kind)) && t == cur) call("onNotice", "Site frauduleux connu : bloqué");
+            // Un serveur local en http:// essayé d'abord en https:// : on affiche l'adresse http.
+            if ("local".equals(kind) && url.startsWith("https://")) url = "http://" + url.substring(8);
             t.errUrl = uri == null ? "" : uri;
             return GeckoResult.fromValue(errorPage(kind, url));
         }

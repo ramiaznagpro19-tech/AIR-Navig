@@ -920,6 +920,7 @@ function judge(f,link){
   const sc=f.scan||{};const fh=host(f.final||f.url);
   if(f.hosts&&f.hosts.length>2&&f.redirects>=2)add(1,'Il t’a renvoyé de site en site ('+f.hosts.join(' → ')+').');
   if(fh&&fh!==host(f.url)){const a=assess(f.final);if(a.score>0){score+=a.score;a.reasons.forEach(x=>r.push('Destination finale ('+fh+') : '+x))}}
+  if(f.sb)add(5,f.sb==='phishing'?'Il est sur la liste des sites d’hameçonnage connus (Google Safe Browsing / Mozilla).':'Il est sur la liste des sites malveillants connus (Google Safe Browsing / Mozilla).');
   if(f.apps&&f.apps.length)add(2,'Il a essayé d’ouvrir une autre appli tout seul ('+f.apps.join(', ')+':).');
   if(f.popups>=3)add(2,'Il a essayé d’ouvrir '+f.popups+' fenêtres sans que tu cliques.');else if(f.popups>0)add(1,'Il a essayé d’ouvrir une fenêtre sans que tu cliques.');
   if(f.apk)add(3,'Il a essayé de télécharger une appli tout seul ('+(f.downloads||[]).join(', ')+').');else if(f.downloads&&f.downloads.length)add(2,'Il a lancé un téléchargement tout seul ('+f.downloads.join(', ')+').');

@@ -107,6 +107,7 @@ public class SandboxActivity extends Activity {
                 @Override
                 public GeckoResult<AllowOrDeny> onLoadRequest(@NonNull GeckoSession s, @NonNull LoadRequest r) {
                     String sc = Uri.parse(r.uri).getScheme();
+                    if (r.uri.startsWith("data:text/html;charset=utf-8;base64,") && !r.hasUserGesture) return GeckoResult.allow();
                     return "http".equals(sc) || "https".equals(sc) ? GeckoResult.allow() : GeckoResult.deny();
                 }
 
@@ -114,6 +115,16 @@ public class SandboxActivity extends Activity {
                 @Override
                 public GeckoResult<GeckoSession> onNewSession(@NonNull GeckoSession s, @NonNull String uri) {
                     return null;
+                }
+
+                /** Erreur (site frauduleux connu, introuvable, certificat…) : page explicative au lieu d'une page blanche. */
+                @Nullable
+                @Override
+                public GeckoResult<String> onLoadError(@NonNull GeckoSession s, @Nullable String uri, @NonNull org.mozilla.geckoview.WebRequestError error) {
+                    String u = uri == null ? url : uri;
+                    String kind = MainActivity.errorKind(error, u);
+                    android.util.Log.i("AIRNavig", "bac à sable : erreur " + kind + " (" + error.code + ") " + u);
+                    return GeckoResult.fromValue(MainActivity.errorHtml(kind, u, false, true));
                 }
             });
             session.setProgressDelegate(new GeckoSession.ProgressDelegate() {

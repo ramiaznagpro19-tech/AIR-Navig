@@ -62,6 +62,7 @@ final class Probe {
     private boolean loadError;
     private boolean loaded;
     private JSONObject scan;
+    private String safeBrowsing;
 
     private Probe(MainActivity act, String url, Done done) {
         this.act = act;
@@ -134,7 +135,11 @@ final class Probe {
             @Nullable
             @Override
             public GeckoResult<String> onLoadError(@NonNull GeckoSession g, @Nullable String uri, @NonNull WebRequestError e) {
-                if (uri == null || uri.equals(url) || hosts.size() <= 1) loadError = true;
+                if (e.category == WebRequestError.ERROR_CATEGORY_SAFEBROWSING) {
+                    safeBrowsing = e.code == WebRequestError.ERROR_SAFEBROWSING_PHISHING_URI ? "phishing" : "malware";
+                } else if (uri == null || uri.equals(url) || hosts.size() <= 1) {
+                    loadError = true;
+                }
                 finishSoon(300);
                 return null;
             }
@@ -328,6 +333,7 @@ final class Probe {
             f.put("beforeUnload", beforeUnload);
             f.put("error", loadError);
             f.put("loaded", loaded);
+            if (safeBrowsing != null) f.put("sb", safeBrowsing);
             if (scan != null) f.put("scan", scan);
         } catch (Exception ignored) {
         }

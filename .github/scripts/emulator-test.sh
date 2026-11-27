@@ -26,6 +26,14 @@ T "sandbox:https://fr.wikipedia.org/wiki/Marseille"; sleep 20
 shot 01b-bac-a-sable
 A shell input keyevent KEYCODE_BACK; sleep 3
 A shell input keyevent KEYCODE_BACK; sleep 3
+A shell am start -n app.airnavig/.MainActivity; sleep 3
+T "sandbox:https://paypal-verification-compte.invalid/login"; sleep 12
+shot 01f-bac-a-sable-introuvable
+A shell input keyevent KEYCODE_BACK; sleep 3
+A shell am start -n app.airnavig/.MainActivity; sleep 3
+T "sandbox:https://testsafebrowsing.appspot.com/s/phishing.html"; sleep 15
+shot 01g-bac-a-sable-hameconnage
+A shell input keyevent KEYCODE_BACK; sleep 3
 A shell am start -n app.airnavig/.MainActivity; sleep 4
 V "http://neverssl.com/"; sleep 4
 shot 01c-test-en-cours
